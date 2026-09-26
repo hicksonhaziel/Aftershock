@@ -26,6 +26,9 @@ importers:
       '@aftershock/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@aftershock/solami':
+        specifier: workspace:*
+        version: link:../../packages/solami
       '@triton-one/yellowstone-grpc':
         specifier: 7.0.1
         version: 7.0.1(typescript@7.0.2)
@@ -44,6 +47,8 @@ importers:
       zod:
         specifier: 4.6.5
         version: 4.6.5
+
+  packages/solami: {}
 
 packages:
 
