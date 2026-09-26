@@ -10,7 +10,7 @@ const strings = (value: unknown, pattern: RegExp): string[] => {
   return value as string[];
 };
 
-/** Full JSON getBlock response, with maxSupportedTransactionVersion: 0.
+/** Full JSON getBlock response, with maxSupportedTransactionVersion: 1.
  * Simple vote semantics: anza-xyz/solana-sdk transaction/src/simple_vote_transaction_checker.rs.
  * Unknown/missing evidence throws; callers must report incomplete coverage, never an empty block.
  */
@@ -22,7 +22,7 @@ export function filterFinalizedBlock(value: unknown, accountInclude: string[]) {
   const seen = new Set<string>();
   for (const item of block.transactions) {
     const entry = object(item), transaction = object(entry.transaction), message = object(transaction.message), meta = object(entry.meta);
-    if (entry.version !== "legacy" && entry.version !== 0) throw new Error("Unsupported or missing transaction version.");
+    if (entry.version !== "legacy" && entry.version !== 0 && entry.version !== 1) throw new Error("Unsupported or missing transaction version.");
     const ids = strings(transaction.signatures, signature);
     if (!ids.length || seen.has(ids[0]!)) throw new Error("Missing or duplicate transaction identity.");
     seen.add(ids[0]!);

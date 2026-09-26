@@ -34,7 +34,7 @@ test("simple vote exclusion respects version, signatures, and instruction count"
 });
 test("unknown versions, missing metadata, invalid indices and duplicates cannot become empty reference", () => {
   for (const mutate of [
-    (b: any) => { b.transactions[0].version = 1; },
+    (b: any) => { b.transactions[0].version = 2; },
     (b: any) => { b.transactions[0].meta = null; },
     (b: any) => { delete b.transactions[0].meta.err; },
     (b: any) => { b.transactions[0].version = 0; delete b.transactions[0].meta.loadedAddresses; },
@@ -42,4 +42,11 @@ test("unknown versions, missing metadata, invalid indices and duplicates cannot 
     (b: any) => { b.transactions.push(b.transactions[0]); },
   ]) { const block = fixture(); mutate(block); assert.throws(() => filterFinalizedBlock(block, [account])); }
   assert.throws(() => filterFinalizedBlock(null, [account]));
+});
+
+test("version one uses inline accounts without requiring lookup metadata", () => {
+  const block = fixture();
+  block.transactions[0]!.version = 1;
+  Reflect.deleteProperty(block.transactions[0]!.meta, "loadedAddresses");
+  assert.deepEqual(filterFinalizedBlock(block, [account]).signatures, [id]);
 });
