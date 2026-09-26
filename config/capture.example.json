@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "accountInclude": ["6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P"],
+  "commitment": "confirmed",
+  "maxTransactions": 25,
+  "maxFrames": 100,
+  "maxBytes": 2097152,
+  "durationSeconds": 10
+}
