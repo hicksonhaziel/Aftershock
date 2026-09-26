@@ -24,7 +24,7 @@ Repeated delivery is useful here: an app must handle it without counting the sam
 
 ## Where we are in the build
 
-We are in **Phase 0: establish trustworthy inputs and interfaces**. Some capture tools needed by Phase 1 are already implemented. Phase 0 is not complete: full filtered reference checks, external consumer selection, and the remaining adapter decisions are still open.
+We are in **Phase 0: establish trustworthy inputs and interfaces**. Some capture tools needed by Phase 1 are already implemented. Phase 0 is not complete: broader coverage validation, external consumer selection, and the remaining adapter decisions are still open.
 
 **Phase 1** will connect recorded inputs to a sample application, show a duplicate-processing bug, export a test, and demonstrate a corrected version passing.
 
@@ -35,3 +35,9 @@ The later phases add real process-crash cases, smaller reproducible cases, a vis
 Solami successfully delivered live data and replayed known transactions in our bounded experiment. This does not establish that every transaction was captured or that every outage will recover perfectly. Those are separate questions with separate checks.
 
 The product's value comes when these recordings help a developer reproduce an incorrect application result and keep a test that prevents it returning.
+
+## The latest comparison
+
+Think of a block as a page in a ledger. Our recorder saved 25 entries, then stopped. We now read the full three pages it touched and apply the same account filter: there were 29 matching entries, including all 25 we saved. The other four were on the last page, which our recording only partly covered.
+
+That means the recorded entries passed this check. It does not mean the short recording contains every entry, or that an application handles them correctly. The full-block reader also now handles transaction version 1, which the live blocks required.

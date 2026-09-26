@@ -55,7 +55,7 @@ The example requests successful, non-vote transactions whose account list mentio
 
 Default limits are 25 transactions, 100 frames, 2 MiB raw data, and 10 seconds after subscription opens. The first limit reached stops capture. Each received frame is saved before decoding as an independent gzip-compressed protobuf chunk. A sealed manifest contains the filter, timestamps, slots, signatures, per-frame hashes, totals, stop reason, and SDK wire-schema version. A separate file hashes the manifest. Endpoint URLs and tokens are not included.
 
-The integrity command verifies the manifest and decompresses/checks every recorded frame. It does not establish finalized-chain completeness. The collector performs a separate mainnet RPC genesis check before connecting; it does not independently prove the streaming endpoint's cluster. Full filtered reference reconstruction remains pending; captured-signature membership and bounded reconnect experiments are available below.
+The integrity command verifies the manifest and decompresses/checks every recorded frame. It does not establish finalized-chain completeness. The collector performs a separate mainnet RPC genesis check before connecting; it does not independently prove the streaming endpoint's cluster. Bounded full-filter reference reconstruction, captured-signature membership, and reconnect experiments are available below.
 
 A duration-limited nonempty capture is a valid bounded observation, not a complete slot interval. Byte limits explicitly record a discarded boundary frame. Stream/decode/filter failures preserve prior evidence with a non-success stop reason; hard termination or storage failure may leave an unsealed directory. No automatic reconnect is attempted yet.
 
@@ -77,7 +77,21 @@ The first implementation accepts at most 16 slots, attempts each reference reque
 
 Evidence is saved under `.aftershock/references/<reference-id>/`: exact successful RPC response bodies with SHA-256 hashes, the request ledger, per-slot coverage, per-signature results, and the parent capture ID/manifest hash. `reference.json` has its own checksum. The original capture is never modified. A hard timeout can leave unsealed evidence.
 
-Exit codes: `0` membership passed, `1` an observed signature is absent from available finalized block evidence, `2` setup/storage failure, and `3` inconclusive evidence. Full finalized transaction projection and equivalent-filter reconstruction remain future work.
+Exit codes: `0` membership passed, `1` an observed signature is absent from available finalized block evidence, `2` setup/storage failure, and `3` inconclusive evidence. Business-event projection remains future work.
+
+## Reconstruct the full matching set
+
+```sh
+pnpm reference:check .aftershock/captures/<capture-id> --full-filter
+```
+
+This mode reads full finalized JSON blocks and applies the capture predicate: successful, non-simple-vote transactions mentioning any configured account. It resolves v0 lookup addresses and supports legacy, v0, and v1. Unknown versions or incomplete metadata prevent complete coverage. It does not decode trades or business events.
+
+The mode accepts at most four slots, caps each response at 16 MiB and total retained responses at 64 MiB, and keeps the same time/retry bounds. The report includes the complete matching set for available blocks and transactions not observed in the capture. These differences do not establish provider loss: the recording can start or stop inside a block. `PASS` still describes captured membership only.
+
+Live validation on September 26, 2026 reconstructed 29 matching transactions across three blocks; all 25 captured transactions matched. Four additional matches were in the final boundary block. The responses contained legacy, v0, and v1 transactions. Report, response hashes, and capture provenance were verified. An earlier request limited to version 0 correctly remained inconclusive on RPC error -32015.
+
+Format semantics follow [Solana versioned transactions](https://solana.com/docs/core/transactions/versioned-transactions); simple-vote classification follows the [Solana SDK checker](https://github.com/anza-xyz/solana-sdk/blob/master/transaction/src/simple_vote_transaction_checker.rs). Both capture and reference still rely on Solami. More intervals and stream-schema compatibility checks remain necessary before broader coverage claims.
 
 ## Observe reconnect and replay
 
