@@ -63,3 +63,5 @@ export async function checkFinalizedMembership(observations: CapturedTransaction
     duplicateDeliveries: observed.length - unique.length, ledger, transactions,
   });
 }
+
+export { filterFinalizedBlock } from "./filter.js";
