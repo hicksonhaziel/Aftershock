@@ -8,12 +8,12 @@ The project is in Phase 0: foundations and technical validation. RPC access, bou
 
 The local blueprint and build phases document guide implementation when present. They are private planning files and are not distributed with this repository. Keep public setup and architecture documentation self-contained.
 
-## Commit and push after small completed changes
+## Commit and push in focused batches
 
-The user explicitly authorizes automatic commits and pushes to this repository. Do not ask again for routine commits or pushes within the requested work.
+The user explicitly authorizes automatic commits and pushes to this repository. On September 27 they requested fewer commits and pushes: group closely related implementation, tests and documentation into focused, verified batches. Do not ask again for routine commits or pushes within the requested work.
 
-- Work in small, coherent increments. After each completed fix, feature increment, refactor, configuration change, documentation change, or test addition/update, run the relevant checks, commit that increment, and push it before starting another independent increment.
-- Do not accumulate an entire phase or several unrelated changes before pushing. Separate useful steps such as a contract, storage implementation, CLI integration, and documentation when each can stand on its own.
+- Work in coherent batches. Complete related implementation, tests and documentation together, run relevant checks, then commit and push at meaningful milestones. Avoid a separate commit for every small edit.
+- Do not accumulate unrelated changes into one large commit. For Phase 0 completion, use a few focused batches such as contracts/decoder, local database/setup, and final evidence/documentation.
 - Keep each pushed commit buildable and its relevant checks passing. Include a fix and the test that proves it in the same commit when appropriate.
 - Running tests without changing tracked files does not require an empty commit. Report the results instead.
 - Stage explicit paths. Inspect the staged diff and filename list before every commit. Do not use blanket staging that may include unrelated user work or private artifacts.
