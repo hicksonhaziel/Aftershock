@@ -91,3 +91,5 @@ export function verifyCapture(directory: string) {
   if (manifest.transactions !== manifest.frames.filter(f => f.kind === "transaction").length) throw new Error("Transaction count mismatch.");
   return { manifest, manifestHash: expectedHash };
 }
+
+export { compareReplay } from "./replay.js";
