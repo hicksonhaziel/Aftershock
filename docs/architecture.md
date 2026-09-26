@@ -16,7 +16,7 @@ Status: foundation established; provider and consumer interfaces remain provisio
 ## Next validation gates
 
 1. RPC endpoint access is verified; validate a bounded mainnet streaming subscription next.
-2. Retain redacted real frames and test reconnect behavior before choosing Mirage or Yellowstone.
+2. Yellowstone raw frames and one bounded reconnect experiment are validated; broader recovery coverage remains open.
 3. Retrieve a small finalized interval and document the exact filter predicate and missing evidence.
 4. Select and pin a permissively licensed external consumer before freezing the adapter protocol.
 5. Implement capture manifests, raw storage, disposable PostgreSQL state, and the first clean/duplicate consumer workflow.
@@ -49,6 +49,12 @@ The first reference lane retrieves block signature lists, not decoded full trans
 
 Successful RPC bytes and their hashes are retained under a new reference ID linked to the immutable capture manifest. Enumeration failure is never converted into an empty block range; null blocks, invalid responses, and unfinalized intervals stay unresolved. Both transport and reference use Solami, so the evidence is not independent provider verification.
 
-The 26 September live check found all 25 recorded transactions in finalized blocks across slots 450672624–450672626. It made six successful RPC requests and retained 88,009 response bytes. Response hashes, the report hash, and the parent capture link were verified locally. This result does not complete Phase 0: filter-equivalent full reference projection, reconnect behavior, and consumer selection remain open.
+The 26 September live check found all 25 recorded transactions in finalized blocks across slots 450672624–450672626. It made six successful RPC requests and retained 88,009 response bytes. Response hashes, the report hash, and the parent capture link were verified locally. This result does not complete Phase 0: filter-equivalent full reference projection, broader reconnect coverage, and consumer selection remain open.
 
 Protocol references: [getBlocks](https://solana.com/docs/rpc/http/getblocks), [getBlock](https://solana.com/docs/rpc/http/getblock).
+
+## Reconnect experiment evidence
+
+On 26 September, the experiment recorded 25 live transactions, closed that capture process, and requested replay from the last observed slot in a new process. All 25 known boundary transactions were received again among 200 replay-session deliveries, and later-slot data arrived. The baseline contained 145,389 raw bytes and the second capture 1,177,419 raw bytes. Both captures and the report links passed integrity verification.
+
+This is a single observed provider replay case. It does not prove complete recovery, transaction uniqueness across all provider traffic, or consumer idempotency. Each individual capture still records zero internal reconnects; the experiment report links the separate processes and their requested replay boundary.

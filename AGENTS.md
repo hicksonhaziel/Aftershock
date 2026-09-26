@@ -4,7 +4,7 @@
 
 Aftershock turns Solana ingestion bugs into reproducible regression tests. Preserve the complete workflow: live capture → declared expectations → isolated consumer execution → controlled failures → inspectable discrepancies → reduced case → offline regression → verified fix.
 
-The project is in Phase 0: foundations and technical validation. RPC access, bounded Yellowstone slot streaming, an initial filtered transaction capture, and finalized captured-signature membership checks have worked against Solami. Full filter-equivalent finalized reference reconstruction, reconnect validation, consumer adapters, fault execution, reduction, and the workbench still need implementation. Consult current code and evidence before reporting capabilities.
+The project is in Phase 0: foundations and technical validation. RPC access, bounded Yellowstone slot streaming, an initial filtered transaction capture, finalized captured-signature membership checks, and one bounded reconnect/replay experiment have worked against Solami. Full filter-equivalent finalized reference reconstruction, broader reconnect validation, consumer adapters, fault execution, reduction, and the workbench still need implementation. Consult current code and evidence before reporting capabilities.
 
 The local blueprint and build phases document guide implementation when present. They are private planning files and are not distributed with this repository. Keep public setup and architecture documentation self-contained.
 

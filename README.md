@@ -55,7 +55,7 @@ The example requests successful, non-vote transactions whose account list mentio
 
 Default limits are 25 transactions, 100 frames, 2 MiB raw data, and 10 seconds after subscription opens. The first limit reached stops capture. Each received frame is saved before decoding as an independent gzip-compressed protobuf chunk. A sealed manifest contains the filter, timestamps, slots, signatures, per-frame hashes, totals, stop reason, and SDK wire-schema version. A separate file hashes the manifest. Endpoint URLs and tokens are not included.
 
-The integrity command verifies the manifest and decompresses/checks every recorded frame. It does not establish finalized-chain completeness. The collector performs a separate mainnet RPC genesis check before connecting; it does not independently prove the streaming endpoint's cluster. Full filtered reference reconstruction and reconnect/replay testing remain pending; captured-signature membership checks are available below.
+The integrity command verifies the manifest and decompresses/checks every recorded frame. It does not establish finalized-chain completeness. The collector performs a separate mainnet RPC genesis check before connecting; it does not independently prove the streaming endpoint's cluster. Full filtered reference reconstruction remains pending; captured-signature membership and bounded reconnect experiments are available below.
 
 A duration-limited nonempty capture is a valid bounded observation, not a complete slot interval. Byte limits explicitly record a discarded boundary frame. Stream/decode/filter failures preserve prior evidence with a non-success stop reason; hard termination or storage failure may leave an unsealed directory. No automatic reconnect is attempted yet.
 
@@ -78,3 +78,17 @@ The first implementation accepts at most 16 slots, attempts each reference reque
 Evidence is saved under `.aftershock/references/<reference-id>/`: exact successful RPC response bodies with SHA-256 hashes, the request ledger, per-slot coverage, per-signature results, and the parent capture ID/manifest hash. `reference.json` has its own checksum. The original capture is never modified. A hard timeout can leave unsealed evidence.
 
 Exit codes: `0` membership passed, `1` an observed signature is absent from available finalized block evidence, `2` setup/storage failure, and `3` inconclusive evidence. Full finalized transaction projection and equivalent-filter reconstruction remain future work.
+
+## Observe reconnect and replay
+
+```sh
+pnpm reconnect:check
+```
+
+This experiment runs the existing capture command in two separate processes. It records up to 25 transactions, waits for the first process to close, pauses for 1.5 seconds, and starts a new subscription with `fromSlot` set to the last slot observed in the first capture. The second recording is capped at 200 transactions, 500 frames, 4 MiB raw data, or 10 seconds. Each child has a 70-second timeout followed by a three-second termination grace period.
+
+It verifies both capture seals and writes a checksummed report linking their manifests. The report lists known transactions received again, those not re-observed within the bounded run, and whether later-slot transactions arrived. Exit `0` requires healthy sessions, at least one known replayed transaction, all known boundary transactions re-observed, and a later-slot observation. Incomplete observations return `3`; setup or evidence failures return `2`.
+
+This deliberately closes a capture process and creates a new subscription; it does not simulate a validator outage or prove gap-free delivery. An unseen transaction in this bounded experiment is not automatically a provider defect. Provider replay is labelled separately from live-only capture. Evidence stays in the ignored `.aftershock/reconnect/` directory.
+
+For a plain-language explanation of what is built and what comes next, read [Understanding Aftershock](docs/understanding-aftershock.md).
