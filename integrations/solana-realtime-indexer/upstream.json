@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "consumerId": "solana-realtime-indexer",
+  "repository": "https://github.com/shaurya35/solana-realtime-indexer",
+  "revision": "fdcb07381ec5c2a971f3107a7f9ec53542c1fb60",
+  "license": "MIT",
+  "licenseFile": "LICENSE.upstream",
+  "selectionStatus": "selected-not-yet-integrated",
+  "reviewedAt": "2026-09-26",
+  "files": [
+    {
+      "path": "LICENSE",
+      "sha256": "bb6aef87dff3875e7d6545db0f6f88a4968147d2db8a4f287717fd22ebfea972",
+      "bytes": 1068
+    },
+    {
+      "path": "Cargo.toml",
+      "sha256": "2b82eabf5b7b590eec9870a3847e0d905e34620f71d19fe806c9a61f2641933d",
+      "bytes": 1184
+    },
+    {
+      "path": "Cargo.lock",
+      "sha256": "d3fcd44facc590e29801c35a932def12e144ad3d80abe77acca428f74a300a7b",
+      "bytes": 140483
+    },
+    {
+      "path": "rust-toolchain.toml",
+      "sha256": "a6a0bbd29ffaa8182dc22d1d9149709f1091e47df40ed96eb8a78a711c66a4ce",
+      "bytes": 66
+    },
+    {
+      "path": "src/main.rs",
+      "sha256": "866a8fda3508c7fcc85fd8292bf44f87be0a6c5dd911d0e18f21fa1d7bdb3130",
+      "bytes": 12289
+    },
+    {
+      "path": "src/cli.rs",
+      "sha256": "7749eb447f43ef02d7a09be4ab83ef23323192d5198dd50bbe8770bf625cb9f2",
+      "bytes": 1262
+    },
+    {
+      "path": "src/config.rs",
+      "sha256": "2b228dedc73a4a0042542851ff1e7ba7561deb210060c0e0270b46d8e61bf890",
+      "bytes": 1919
+    },
+    {
+      "path": "src/capture.rs",
+      "sha256": "f9e1d8be950c7d36c165bf8af21b3ef81dbc51b01cd6d9a6ef8c77871b8719b8",
+      "bytes": 2895
+    },
+    {
+      "path": "src/datasources/replay.rs",
+      "sha256": "0480cbddf8f4f919c171c83d5bdc6e69b0b0b80948c6cd62b65521017874f232",
+      "bytes": 4493
+    },
+    {
+      "path": "src/pipeline.rs",
+      "sha256": "33d6a985469d6675f8da8f53bb48856165a7121c972adda13b8680ee47efb559",
+      "bytes": 2445
+    },
+    {
+      "path": "src/identity.rs",
+      "sha256": "82a4db227b954c2f195478cd3a74ed5fa1e281eea121702d4549ff0240c47874",
+      "bytes": 243
+    },
+    {
+      "path": "src/processors/pumpfun.rs",
+      "sha256": "140a476ad8b8d77aa433a5beab139affeddbb0900b5db8cb658c5bc6e67e309f",
+      "bytes": 3247
+    },
+    {
+      "path": "src/writer.rs",
+      "sha256": "62ad90ebeca5ad29813f9042578f14b790fbf187815a333767b16b610cf5bef8",
+      "bytes": 5366
+    },
+    {
+      "path": "src/db.rs",
+      "sha256": "0893a1283960d4d7a87de2a980eb8afd9fa9a474ca39e32b9a633f3e33ef0ecc",
+      "bytes": 10933
+    },
+    {
+      "path": "migrations/20260721170252_initial_schema.sql",
+      "sha256": "a6d2b175c564bac8ca09464ad2b2e8ddb8889112b66c7a0103f54be0d2add766",
+      "bytes": 1791
+    },
+    {
+      "path": "migrations/20260813000000_numeric_amounts.sql",
+      "sha256": "9680c17dc9a3bfa528be0048171b2d5cb8a3b6f58b5dc2a5d362ce7589ebf462",
+      "bytes": 165
+    }
+  ]
+}
