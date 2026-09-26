@@ -1,0 +1,10 @@
+node_modules/
+dist/
+coverage/
+.env
+.env.*
+!.env.example
+.aftershock/
+*.tsbuildinfo
+/Aftershock_Project_Blueprint.md
+/BUILD_PHASES.md
