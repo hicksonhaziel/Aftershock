@@ -5,7 +5,7 @@
   "revision": "fdcb07381ec5c2a971f3107a7f9ec53542c1fb60",
   "license": "MIT",
   "licenseFile": "LICENSE.upstream",
-  "selectionStatus": "selected-not-yet-integrated",
+  "selectionStatus": "build-and-decoder-validated-adapter-pending",
   "reviewedAt": "2026-09-26",
   "files": [
     {
@@ -88,5 +88,6 @@
       "sha256": "9680c17dc9a3bfa528be0048171b2d5cb8a3b6f58b5dc2a5d362ce7589ebf462",
       "bytes": 165
     }
-  ]
+  ],
+  "buildValidation": "build-validation.json"
 }

@@ -4,7 +4,8 @@ import { spawnSync } from "node:child_process";
 import { resolve } from "node:path";
 const root = resolve(import.meta.dirname, "../../..");
 const envFile = resolve(root, ".aftershock/dev-db.env");
-const args = ["compose", "--project-name", "aftershock-dev", "--env-file", envFile, "-f", resolve(root, "compose.yaml")];
+const project = process.env.AFTERSHOCK_COMPOSE_PROJECT || "aftershock-dev";
+const args = ["compose", "--project-name", project, "--env-file", envFile, "-f", resolve(root, "compose.yaml")];
 function docker(extra: string[], input?: string, timeout = 60_000) {
   const result = spawnSync("docker", [...args, ...extra], { encoding: "utf8", timeout, maxBuffer: 1024 * 1024,
     ...(input === undefined ? {} : { input }) });
@@ -16,9 +17,13 @@ function sql(database: string, input: string) {
 }
 const action = process.argv[2];
 try {
+  if (!/^aftershock-[a-z0-9-]{1,40}$/.test(project)) throw new Error("Use an Aftershock-owned Compose project name.");
   if (!["up", "check", "down"].includes(action ?? "")) throw new Error("Use db:up, db:check or db:down.");
   if (action === "up") {
     if (!existsSync(envFile)) {
+      const volumes = spawnSync("docker", ["volume", "ls", "--format", "{{.Name}}"], { encoding: "utf8", timeout: 10_000 });
+      if (volumes.error || volumes.status !== 0) throw new Error("Could not inspect owned database storage.");
+      if (volumes.stdout.split("\n").includes(`${project}_aftershock_data`)) throw new Error("Existing database volume requires its original local password file; refusing to replace credentials.");
       mkdirSync(resolve(root, ".aftershock"), { recursive: true, mode: 0o700 });
       writeFileSync(envFile, `AFTERSHOCK_DB_PASSWORD=${randomBytes(32).toString("hex")}\n`, { flag: "wx", mode: 0o600 });
     }

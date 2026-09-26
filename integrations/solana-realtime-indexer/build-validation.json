@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "validatedAt": "2026-09-27",
+  "revision": "fdcb07381ec5c2a971f3107a7f9ec53542c1fb60",
+  "compiler": "rustc 1.96.1 (31fca3adb 2026-06-26)",
+  "buildCommand": [
+    "cargo",
+    "+1.96.1",
+    "build",
+    "--locked",
+    "--jobs",
+    "2"
+  ],
+  "buildProfile": "dev",
+  "sourceChangesForInitialBuild": 0,
+  "initialBinarySha256": "ed4636f85a73de0b73941d0a2dff6daadcb24a6d9e1594842149514ea9ca6fcf",
+  "observationPatch": {
+    "file": "event-audit.patch",
+    "sha256": "72aa24e0b600d2622f245b801bddedd35978bc3ad7f9aacb88c7aea45aeb08b7",
+    "filesChanged": 1,
+    "addedLines": 9,
+    "removedLines": 0,
+    "purpose": "Emit event identities after replay; decoder, processor and database logic unchanged"
+  },
+  "integrationEffort": {
+    "phase0": "Source review, pinned build, raw replay bridge and observation patch; full adapter not implemented",
+    "coldBuild": "First bounded 480-second attempt timed out; cached continuation completed in 155 seconds",
+    "observationBuildSeconds": 7.38
+  },
+  "liveDerivedInput": {
+    "parentCaptureId": "991da3d0-526d-4c74-b00b-3b6f4921c818",
+    "inputSha256": "4b9271199fbca5f547b6085a540feab17421e644a4c8c5e789e0424cd6863f22",
+    "recordedTransactions": 25,
+    "selectedTransactions": 23,
+    "explicitV1Exclusions": 2,
+    "replaySkipped": 0,
+    "onePassEvents": 22,
+    "onePassUniqueEventIds": 22,
+    "twoPassEvents": 44,
+    "twoPassUniqueEventIds": 22,
+    "databaseEnabled": false,
+    "networkResolutionEnabled": false
+  },
+  "multiEventFixture": {
+    "source": "external-fixture",
+    "file": "fixtures/golden-500.jsonl",
+    "sha256": "bd1bac99554c8a3bfa6053eaa86e3ca634840af76f9a80519152bb43cc8c0986",
+    "events": 503,
+    "uniqueEventIds": 503,
+    "transactionsWithMultipleDistinctEvents": 111,
+    "examplePaths": [
+      [
+        [
+          5,
+          1,
+          6
+        ],
+        [
+          5,
+          4,
+          6
+        ]
+      ],
+      [
+        [
+          5,
+          5
+        ],
+        [
+          8,
+          5
+        ]
+      ],
+      [
+        [
+          5,
+          5
+        ],
+        [
+          8,
+          5
+        ]
+      ]
+    ],
+    "independentlyFinalizedByAftershock": false
+  },
+  "upstreamTargetedTest": {
+    "name": "tests::decodes_successful_pumpfun_trade",
+    "passed": 1,
+    "solLamports": "97777",
+    "tokenBaseUnits": "3940708338"
+  },
+  "consumerCampaignStatus": "not-run",
+  "compatibilityLimit": "Pinned Rust protobuf converts only legacy/v0; v1 must be rejected or explicitly excluded before execution."
+}

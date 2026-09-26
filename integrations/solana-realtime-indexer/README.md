@@ -2,7 +2,7 @@
 
 Selected on September 26, 2026: [shaurya35/solana-realtime-indexer](https://github.com/shaurya35/solana-realtime-indexer), revision [`fdcb07381ec5c2a971f3107a7f9ec53542c1fb60`](https://github.com/shaurya35/solana-realtime-indexer/tree/fdcb07381ec5c2a971f3107a7f9ec53542c1fb60).
 
-**Status: source reviewed and revision pinned; not built, adapted, or campaign-tested yet.** This selection does not complete Phase 0 or the external-integration acceptance requirement. No upstream defect or maintainer endorsement is claimed.
+**Status: source pinned, build and scoped decoder replay validated; full adapter and consumer campaign pending.** These checks complete the external selection/build input work for Phase 0, not the external-integration acceptance requirement. No upstream defect or maintainer endorsement is claimed.
 
 `upstream.json` records the exact commit and SHA-256 hashes of reviewed files, including the upstream dependency lockfile. Downloaded research sources remain local and ignored. Updates require deliberate re-review and a new pin; do not follow `main` during a campaign.
 
@@ -33,7 +33,7 @@ The MIT license is retained in `LICENSE.upstream`, including Shaurya Jha's copyr
 
 The initial external campaign targets successful Pump.fun CPI trade events, not all account mentions, PumpSwap pool resolution, token transfers or USD valuations. Preserve raw Solami frames and parent hashes. Produce a separate derived JSONL artifact containing the embedded transaction-info protobuf bytes plus slot, with a mapping back to capture delivery sequence, slot, signature and raw hash. Never overwrite the capture or silently drop unsupported messages.
 
-Before execution, validate the pinned Rust conversion/decoder on representative legacy, v0 and v1 inputs. A failing version receives an explicit exclusion/unsupported result; it must not be labelled an empty successful transaction. The existing 25-transaction recording includes all three versions but has not yet been decoded by this consumer. At least one authentic trade event and one multi-event transaction must be confirmed before accepting a campaign baseline.
+The validation below establishes legacy/v0 replay and an explicit v1 exclusion; revalidate any dependency/version expansion before execution. A failing version receives an explicit exclusion/unsupported result; it must not be labelled an empty successful transaction. The 25-transaction recording includes all three versions; 23 legacy/v0 messages were decoded and two v1 messages explicitly excluded. Authentic event decoding and a separate attributed multi-event fixture are confirmed below; a later campaign must retain its own supported nonempty baseline.
 
 Canonical event identity in the Aftershock projection will include chain, program, signature, instruction path, ordinal and projection version; the upstream row key maps to its signature/path/ordinal components. Keep delivery identity separate so replayed deliveries can refer to the same business event.
 
@@ -62,4 +62,24 @@ Planned adapter operations are `describe`, `start`, `deliver`, `drain`, `snapsho
 
 ## Remaining integration gates
 
-Build with the pinned lockfile and a recorded compiler; verify the replay bridge and Rust version support; confirm trade/event identity on authentic input; implement isolated database lifecycle and observations; run the clean/duplicate campaign; add and validate the real commit barrier. Record actual results and limitations. Selection and source verification alone are not a completed external integration.
+Build/replay/identity validation is recorded below. Implement the external adapter and isolated database lifecycle/observations; run the clean/duplicate campaign; add and validate the real commit barrier. Record actual results and limitations. Selection and source verification alone are not a completed external integration.
+
+## Phase 0 build and decoder validation — September 27
+
+The original pinned source built with **Rust 1.96.1** and `cargo +1.96.1 build --locked --jobs 2`. The initial cold build reached its 480-second bound; a cached continuation finished in 155 seconds. No source/dependency changes were needed for that build. Its upstream targeted trade test passed, including exact amounts of 97,777 lamports and 3,940,708,338 token base units. These fixture checks validate the selected decoder's input family, not every current program layout.
+
+The external Rust protobuf dependency has no v1 config field and maps the versioned flag to V0. Therefore the first external consumer scope is **legacy/v0 only**. Aftershock's own capture/reference reader continues to preserve and inspect v1. The replay bridge refuses v1 by default; explicitly selecting `--legacy-v0-only` retains an exclusion ledger, never silently treating v1 as V0.
+
+```sh
+pnpm capture:export-replay .aftershock/captures/<capture-id> --legacy-v0-only
+```
+
+The bridge extracts the original embedded transaction-info protobuf submessage without re-encoding it; tests check preservation of unknown fields and rejection of malformed framing. It writes checksummed input and a source-sequence/slot/signature/hash mapping. Control frames are counted separately. This is an integration input artifact, not the future portable regression export.
+
+Our 25-message authentic recording yielded 23 selected messages and two explicit v1 exclusions. The unmodified external replay sent all 23 with zero skips and collected 22 events. `event-audit.patch` adds nine observation-only lines to one file so we can inspect the emitted identities after processing. With that patch, one pass produced 22 unique event IDs; two passes produced 44 emissions with the same 22 identities in the same repeated order. No database was enabled: **this does not prove persistence idempotency**.
+
+The separately attributed upstream `golden-500.jsonl` fixture produced 503 unique event identities, with 111 transactions containing multiple distinct events. Example paths `[5,1,6]` and `[5,4,6]` share a transaction signature but identify different events. These are upstream fixtures claimed to be mainnet by their author; Aftershock did not independently finalize that fixture. Our own live 23-message selection did not contain a multi-event transaction.
+
+`build-validation.json` records source/compiler/binary/input/patch identities, measured build effort and observed counts. Full process adaptation, disposable external database execution, fault instrumentation and the required conclusive idempotency/recovery campaign remain later work.
+
+To reproduce the external check, obtain the exact revision in `upstream.json`, verify its reviewed file hashes, and build with Rust 1.96.1 plus the pinned Cargo.lock. A native C/C++ build toolchain is needed by dependencies. Apply the included patch only for identity observation and retain its hash. Run the absolute binary with `replay --path <absolute-derived-jsonl> --repeat 1` from a fresh temporary working directory, with a minimal environment containing no provider keys, no `DATABASE_URL` and no `.env` in its ancestor path; omit `--resolve`. Set `AFTERSHOCK_EVENT_AUDIT=1` only for the observation build. That diagnostic output is not the future JSON-RPC adapter protocol.

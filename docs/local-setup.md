@@ -8,7 +8,7 @@ pnpm db:check
 pnpm db:down
 ```
 
-`db:up` starts the digest-pinned PostgreSQL 15 image in the fixed `aftershock-dev` Compose project, binds only localhost port 55439, and creates a random password in ignored `.aftershock/dev-db.env` (mode 0600). It never connects to an environment-provided database URL. Keep that local password file while reusing the development volume. `db:down` stops this Compose project and preserves its volume.
+`db:up` starts the digest-pinned PostgreSQL 15 image in the fixed `aftershock-dev` Compose project, binds only localhost port 55439, and creates a random password in ignored `.aftershock/dev-db.env` (mode 0600). It never connects to an environment-provided database URL. Keep that local password file while reusing the development volume. If it is missing while the volume exists, startup refuses to invent replacement credentials. For an isolated clean-checkout verification, set `AFTERSHOCK_COMPOSE_PROJECT` to a unique `aftershock-...` name; do not run two projects on port 55439 simultaneously. `db:down` stops this Compose project and preserves its volume.
 
 `db:check` creates a uniquely named database, applies `migrations/001_consumer_state.sql`, records a run ownership token, and checks exact integers above JavaScript's safe range, business-key uniqueness and transaction rollback. It drops only that newly generated database after verifying ownership. If interrupted, the leftover database retains its generated name/ownership marker for inspection. Never use broad DROP/TRUNCATE commands against unrelated databases.
 

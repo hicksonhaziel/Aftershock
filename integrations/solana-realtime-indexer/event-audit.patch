@@ -1,0 +1,14 @@
+--- a/src/main.rs
++++ b/src/main.rs
+@@ -85,2 +85,11 @@
+             println!("Collected {} events", events.lock().unwrap().len());
++            // Aftershock observation only: expose event identities without changing processing.
++            if std::env::var_os("AFTERSHOCK_EVENT_AUDIT").is_some() {
++                let audit: Vec<_> = events.lock().unwrap().iter().map(|event| serde_json::json!({
++                    "signature": event.signature,
++                    "absolutePath": event.absolute_path,
++                    "ordinal": event.event_ordinal
++                })).collect();
++                println!("AFTERSHOCK_EVENT_AUDIT={}", serde_json::to_string(&audit)?);
++            }
+             return Ok(());

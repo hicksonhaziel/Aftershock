@@ -1,6 +1,6 @@
 # Initial architecture decisions
 
-Status: foundation established; provider and consumer interfaces remain provisional.
+Status: Phase 0 accepted September 27, 2026. Initial version 1 interfaces are defined in the adapter protocol; the runner and application workflow are Phase 1 work. See `phase-0-report.md`.
 
 ## Established boundaries
 
@@ -13,13 +13,13 @@ Status: foundation established; provider and consumer interfaces remain provisio
 - The future supervisor owns process termination. An in-process exception or graceful stop is not a crash test.
 - Capture files and local credentials are ignored. Credentials must never enter exported metadata.
 
-## Next validation gates
+## Next implementation gates
 
-1. RPC access and bounded mainnet transaction streaming are verified.
-2. Yellowstone raw frames and one bounded reconnect experiment are validated; broader recovery coverage remains open.
-3. Full-filter finalized reconstruction passed one interval; an offline field audit matched legacy/v0/v1 messages. Broader coverage and business-event decoding remain open.
-4. External consumer selected: `shaurya35/solana-realtime-indexer` at `fdcb07381ec5c2a971f3107a7f9ec53542c1fb60` (MIT). Validate its build/replay bridge before freezing the adapter protocol.
-5. Capture manifests and raw storage exist; implement disposable PostgreSQL state and the first clean/duplicate consumer workflow.
+1. Implement the isolated consumer supervisor against `adapter-protocol.md`.
+2. Build maintained faulty/fixed samples using the run-owned PostgreSQL schema.
+3. Turn the declared event projection into clean/duplicate assertions and a portable regression workflow.
+4. Extend the validated external decoder bridge into a full persistence adapter; preserve explicit v1 exclusions until its dependencies support that version.
+5. Add real commit-barrier process-kill evidence, reduction and the workbench in their planned phases.
 
 The proposed web layer is React/Vite with Fastify and a persistent worker. Those packages will be introduced with their working features. Public hosted execution will run maintained examples; private consumer execution belongs on the developer's local runner.
 
@@ -49,7 +49,7 @@ The first reference lane retrieves block signature lists, not decoded full trans
 
 Successful RPC bytes and their hashes are retained under a new reference ID linked to the immutable capture manifest. Enumeration failure is never converted into an empty block range; null blocks, invalid responses, and unfinalized intervals stay unresolved. Both transport and reference use Solami, so the evidence is not independent provider verification.
 
-The 26 September live check found all 25 recorded transactions in finalized blocks across slots 450672624–450672626. It made six successful RPC requests and retained 88,009 response bytes. Response hashes, the report hash, and the parent capture link were verified locally. This result does not complete Phase 0: broader reference/reconnect coverage and external consumer execution remain open. Full filtered transaction reconstruction was subsequently validated; business-event projection remains open.
+The 26 September live check found all 25 recorded transactions in finalized blocks across slots 450672624–450672626. It made six successful RPC requests and retained 88,009 response bytes. Response hashes, the report hash, and the parent capture link were verified locally. This first check alone did not complete Phase 0. Subsequent full-filter, replay, external decoder and setup evidence is recorded in the Phase 0 report.
 
 Protocol references: [getBlocks](https://solana.com/docs/rpc/http/getblocks), [getBlock](https://solana.com/docs/rpc/http/getblock).
 
@@ -65,4 +65,4 @@ The installed Yellowstone 7.0.1 schema includes the optional message `config` us
 
 `compatibility:check` audits saved, linked evidence without network access. The first run matched five legacy, eighteen v0 and two v1 transactions on message fields, loaded accounts and success status. Unknown or incomplete evidence stays inconclusive; malformed or tampered source artifacts fail setup. The comparison excludes business events, balance arithmetic, logs and inner instructions. This validates the current message input path for these observations, not the future application's projection.
 
-Schema source: [Yellowstone storage protobuf](https://github.com/rpcpool/yellowstone-grpc/blob/master/yellowstone-grpc-proto/proto/solana-storage.proto). The selected consumer and scoped event/output contract are documented in [the integration plan](../integrations/solana-realtime-indexer/README.md). Exact adapter protocol and controls remain provisional until its build and replay bridge are validated.
+Schema source: [Yellowstone storage protobuf](https://github.com/rpcpool/yellowstone-grpc/blob/master/yellowstone-grpc-proto/proto/solana-storage.proto). The selected consumer and scoped event/output contract are documented in [the integration plan](../integrations/solana-realtime-indexer/README.md). Its build and scoped replay bridge are now validated; version 1 protocol definitions are in `adapter-protocol.md`, while process-control implementation remains ahead.

@@ -1,55 +1,31 @@
 # Understanding Aftershock
 
-Aftershock will test whether a Solana app keeps the right records when messages repeat, arrive late, or processing stops unexpectedly.
+Aftershock will help developers find bugs in apps that read Solana transactions.
 
-Imagine a shop receiving the same order twice after the internet reconnects. Its app should count one order. Aftershock will replay situations like that and show whether the app counted correctly.
+Imagine a shop receives the same order twice because its connection dropped. The shop should still count one order. Aftershock will deliberately repeat messages or stop an app at a controlled moment, then check whether its records are still right.
 
-## What works now
+## Phase 0 is finished
 
-```mermaid
-flowchart TD
-  A[Solana: real transactions] --> B[Solami: delivers the data]
-  B --> C[Aftershock: records the original messages]
-  C --> D[Checks recorded transactions against finalized blocks]
-  C --> E[Closes the connection and asks for earlier messages again]
-  D --> F[Evidence saved for later tests]
-  E --> F
-  F -. Next .-> G[Feed the messages into a sample app]
-  G -. Later .-> H[Expose a bug, save its test, and verify the fix]
-```
+Phase 0 means preparing and checking the foundations. It does not mean the full app is finished.
 
-We have a working recorder and initial checks around its data source. In the first finalized check, all 25 recorded transactions were found in finalized blocks. In a separate reconnect experiment, 25 known transactions arrived again after requesting replay. The recordings and checks are distinct experiments.
+We can now receive real Solana data through Solami, save the original messages, check the recording against finalized blockchain records, and ask Solami to replay earlier messages. Two bounded capture/reference checks passed, and two reconnect tests recovered all 25 known boundary messages in each test.
 
-Repeated delivery is useful here: an app must handle it without counting the same transaction twice. We have not yet tested a consumer app against these repeated messages.
+We also have a separate local test database, rules for how future test tools communicate, and automated checks for the data formats. A clean setup passed all 50 tests and the database checks.
 
-## Where we are in the build
+## The external app
 
-We are in **Phase 0: establish trustworthy inputs and interfaces**. Some capture tools needed by Phase 1 are already implemented. Phase 0 is not complete: broader coverage validation, external consumer build validation, database setup, licensing, and the remaining adapter decisions are still open.
+We built a pinned version of `solana-realtime-indexer`, an existing app that reads trade messages. It read 23 supported messages from our recording and found 22 events. It cannot safely read the newer version 1 format, so the bridge explicitly excluded two messages and kept a record of that choice. Aftershock's recorder itself still preserves those messages.
 
-**Phase 1** will connect recorded inputs to a sample application, show a duplicate-processing bug, export a test, and demonstrate a corrected version passing.
+Another saved fixture showed multiple trade events inside a single transaction. This is why our event IDs include where the event happened inside the transaction, not just the transaction's name.
 
-The later phases add real process-crash cases, smaller reproducible cases, a visual workbench, an independently maintained app integration, and the public release.
+Reading events successfully does not yet prove the app stores them correctly after duplicates or crashes. Those are the tests we build next.
 
-## What today's result means
+## What comes next
 
-Solami successfully delivered live data and replayed known transactions in our bounded experiment. This does not establish that every transaction was captured or that every outage will recover perfectly. Those are separate questions with separate checks.
+Phase 1 connects the pieces: saved data → sample app → repeated message → incorrect total → saved regression test → corrected app passing.
 
-The product's value comes when these recordings help a developer reproduce an incorrect application result and keep a test that prevents it returning.
+Later phases add real crash/restart tests, reduce failures into smaller examples, build the visual dashboard, finish external-app campaigns and prepare the public demo.
 
-## The latest comparison
+Solami worked in our live checks. When the trial expires, you can request another one; the judges will use their own keys. Our offline development can continue using the saved recordings.
 
-Think of a block as a page in a ledger. Our recorder saved 25 entries, then stopped. We now read the full three pages it touched and apply the same account filter: there were 29 matching entries, including all 25 we saved. The other four were on the last page, which our recording only partly covered.
-
-That means the recorded entries passed this check. It does not mean the short recording contains every entry, or that an application handles them correctly. The full-block reader also now handles transaction version 1, which the live blocks required.
-
-## Can we read the messages correctly?
-
-The latest check compared the contents of our 25 saved streaming messages with the full ledger responses. All matched, including two examples of the newer transaction format. It checked addresses, instructions and transaction settings, using saved files without contacting Solami again.
-
-We now have evidence that these message fields survive recording and decoding. Turning instructions into application events, such as trades, is a separate step. The external app is now selected; its first planned test focuses on Pump.fun trade records. Its build and replay bridge still need validation before we finalize the adapter interface.
-
-## Which real app will we test?
-
-We selected **solana-realtime-indexer**, an independently maintained app that reads Solana trades and stores them in a database. We pinned one exact code revision so future upstream changes cannot silently change our test.
-
-The first test will feed it the same supported trades twice. The expected result is unchanged stored trades and totals. After that, we will add a controlled stop after a database commit, restart it, and check recovery. Selecting the app is done; running those tests is still ahead. See the [integration plan](../integrations/solana-realtime-indexer/README.md).
+The technical evidence and remaining limits are in the [Phase 0 report](phase-0-report.md). Your private planning files, credentials and raw recordings stay out of GitHub.

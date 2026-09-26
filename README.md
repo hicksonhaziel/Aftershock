@@ -6,7 +6,7 @@ Aftershock is being built to capture mainnet data through Solami, test isolated 
 
 ## Current status
 
-Early implementation: TypeScript workspace, draft contracts, RPC verification, a live slot-stream probe, bounded filtered transaction capture, offline capture integrity verification, and finalized signature-membership checks. Fault execution, reduction, and the workbench are not implemented yet. Unit tests use synthetic inputs; live captures are kept separately in ignored local storage.
+**Phase 0 complete; Phase 1 next.** Live capture/reference/replay checks, versioned contracts, isolated PostgreSQL setup and scoped external decoder replay are verified. Consumer fault execution, reduction, portable regression execution and the workbench are not implemented yet. See the [acceptance report](docs/phase-0-report.md) for evidence and scope. Synthetic tests, attributed upstream fixtures and live captures remain explicitly distinct.
 
 ## Local setup
 
@@ -27,7 +27,7 @@ Set `SOLAMI_RPC_URL` in the ignored `.env` file to the endpoint issued by your S
 
 ## Workspace
 
-- `packages/contracts`: draft versioned envelopes, adapter descriptions, and check results.
+- `packages/contracts`: versioned capture, execution, protocol and regression-artifact contracts.
 - `packages/capture`: compressed raw storage, capture sealing, and integrity verification.
 - `packages/solami`: bounded read-only RPC requests with sanitized failures.
 - `packages/reference`: finalized captured-signature membership and coverage reporting.
@@ -38,7 +38,7 @@ Set `SOLAMI_RPC_URL` in the ignored `.env` file to the endpoint issued by your S
 
 `pnpm check` runs strict TypeScript checking and tests covering integer precision, schema compatibility, explicit adapter acknowledgements, and separate coverage/verdict reporting. CI runs the same checks.
 
-The project license and third-party integration selection are pending. No third-party consumer code has been incorporated.
+Aftershock uses MIT; external source attribution is retained separately. See [local setup and licensing](docs/local-setup.md) and the [adapter protocol](docs/adapter-protocol.md).
 
 ## Streaming connectivity probe
 
@@ -121,4 +121,14 @@ For a plain-language explanation of what is built and what comes next, read [Und
 
 ## Selected external consumer
 
-The first external target is [shaurya35/solana-realtime-indexer](https://github.com/shaurya35/solana-realtime-indexer), pinned to `fdcb07381ec5c2a971f3107a7f9ec53542c1fb60` under MIT. The [integration plan](integrations/solana-realtime-indexer/README.md) records source findings, hashes, attribution, Pump.fun trade identity/projection, duplicate-replay assertions and required process controls. Selection is complete; build validation, the adapter and a conclusive external campaign remain outstanding.
+The first external target is [shaurya35/solana-realtime-indexer](https://github.com/shaurya35/solana-realtime-indexer), pinned to `fdcb07381ec5c2a971f3107a7f9ec53542c1fb60` under MIT. The [integration plan](integrations/solana-realtime-indexer/README.md) records source findings, hashes, attribution, Pump.fun trade identity/projection, duplicate-replay assertions and required process controls. Selection, pinned build and scoped decoder replay are validated. The full adapter and a conclusive external persistence campaign remain outstanding.
+
+## Local test database and external replay input
+
+```sh
+pnpm db:up
+pnpm db:check
+pnpm capture:export-replay .aftershock/captures/<capture-id> --legacy-v0-only
+```
+
+The database helper targets only an Aftershock Compose project; see [local setup](docs/local-setup.md). The replay bridge preserves embedded protobuf bytes and records every explicit v1 exclusion for the pinned external consumer. It does not execute a consumer campaign or create a portable regression case. See the [validated integration scope](integrations/solana-realtime-indexer/README.md).
