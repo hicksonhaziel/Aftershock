@@ -16,3 +16,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm check
+      - run: pnpm db:up
+      - run: pnpm db:check
+      - if: always()
+        run: if [ -f .aftershock/dev-db.env ]; then pnpm db:down; fi

@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgres:15-alpine@sha256:1c52f5ad23db5d7648a63634444af76de48e63b860fccbe3e3a5458b2812eaed
+    environment:
+      POSTGRES_USER: aftershock
+      POSTGRES_DB: aftershock_control
+      POSTGRES_PASSWORD: ${AFTERSHOCK_DB_PASSWORD:?Use pnpm db:up to create local configuration}
+    ports:
+      - "127.0.0.1:55439:5432"
+    volumes:
+      - aftershock_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aftershock -d aftershock_control"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    labels:
+      dev.aftershock.owner: local-development
+volumes:
+  aftershock_data:

@@ -10,7 +10,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "tsx --test packages/*/test/*.test.ts apps/cli/test/*.test.ts",
-    "check": "pnpm typecheck && pnpm test",
+    "check": "pnpm format:check && pnpm typecheck && pnpm test",
     "doctor": "tsx apps/cli/src/index.ts doctor",
     "rpc:check": "tsx apps/cli/src/index.ts rpc-check",
     "stream:check": "tsx apps/cli/src/stream-check.ts",
@@ -18,11 +18,17 @@
     "capture:verify": "tsx apps/cli/src/verify-capture.ts",
     "reference:check": "tsx apps/cli/src/reference-check.ts",
     "reconnect:check": "tsx apps/cli/src/reconnect-check.ts",
-    "compatibility:check": "tsx apps/cli/src/compatibility-check.ts"
+    "compatibility:check": "tsx apps/cli/src/compatibility-check.ts",
+    "db:up": "tsx apps/cli/src/database.ts up",
+    "db:check": "tsx apps/cli/src/database.ts check",
+    "db:down": "tsx apps/cli/src/database.ts down",
+    "capture:export-replay": "tsx apps/cli/src/export-replay.ts",
+    "format:check": "node scripts/check-format.mjs"
   },
   "devDependencies": {
     "@types/node": "22.18.6",
     "tsx": "4.23.15",
     "typescript": "7.0.2"
-  }
+  },
+  "license": "MIT"
 }
