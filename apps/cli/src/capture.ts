@@ -36,6 +36,7 @@ try {
   const request = SubscribeRequest.fromPartial({
     transactions: { aftershock: { vote: false, failed: false, accountInclude: config.accountInclude } },
     commitment: config.commitment === "finalized" ? CommitmentLevel.FINALIZED : CommitmentLevel.CONFIRMED,
+    ...(config.fromSlot === undefined ? {} : { fromSlot: config.fromSlot }),
   });
   stream = await client.subscribe(Buffer.from(SubscribeRequest.encode(request).finish()));
   writer = new CaptureWriter(process.env.AFTERSHOCK_DATA_DIR || ".aftershock", config);

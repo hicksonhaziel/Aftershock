@@ -11,6 +11,7 @@ export const captureConfigSchema = z.strictObject({
   maxFrames: z.number().int().min(1).max(2000),
   maxBytes: z.number().int().min(1024).max(64 * 1024 * 1024),
   durationSeconds: z.number().int().min(1).max(60),
+  fromSlot: decimal.optional(),
 });
 export const captureFrameSchema = z.strictObject({
   sequence: z.number().int().nonnegative(),
@@ -28,7 +29,7 @@ export const captureFrameSchema = z.strictObject({
 export const captureManifestSchema = z.strictObject({
   schemaVersion: z.literal(1),
   captureId: z.uuid(),
-  source: z.literal("live"),
+  source: z.enum(["live", "provider-replay"]),
   provider: z.literal("solami"),
   transport: z.literal("yellowstone"),
   wireSchema: z.literal("@triton-one/yellowstone-grpc@7.0.1/SubscribeUpdate"),

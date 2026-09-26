@@ -58,3 +58,14 @@ test("byte limit retains earlier evidence and records rejected frame", t => {
 test("unfiltered capture configurations are rejected", () => {
   assert.equal(captureConfigSchema.safeParse({ ...config, accountInclude: [] }).success, false);
 });
+
+test("provider replay is labelled separately and retains the requested slot", t => {
+  const root = mkdtempSync(join(tmpdir(), "aftershock-replay-"));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const writer = new CaptureWriter(root, { ...config, fromSlot: "123" });
+  writer.append(Buffer.from("synthetic"));
+  writer.seal("duration");
+  const { manifest } = verifyCapture(writer.directory);
+  assert.equal(manifest.source, "provider-replay");
+  assert.equal(manifest.config.fromSlot, "123");
+});

@@ -54,7 +54,7 @@ export class CaptureWriter {
   seal(stopReason: CaptureManifest["stopReason"], discardedFrameAtByteLimit = false) {
     if (this.sealed) throw new Error("Capture is already sealed.");
     const manifest = captureManifestSchema.parse({
-      schemaVersion: 1, captureId: this.captureId, source: "live", provider: "solami", transport: "yellowstone",
+      schemaVersion: 1, captureId: this.captureId, source: this.config.fromSlot === undefined ? "live" : "provider-replay", provider: "solami", transport: "yellowstone",
       wireSchema: "@triton-one/yellowstone-grpc@7.0.1/SubscribeUpdate", cluster: "mainnet-beta",
       clusterEvidence: "separate-rpc-genesis-check", startedAtUtc: this.startedAtUtc,
       endedAtUtc: new Date().toISOString(), config: this.config,
