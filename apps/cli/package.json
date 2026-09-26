@@ -8,6 +8,7 @@
     "@triton-one/yellowstone-grpc": "7.0.1",
     "bs58": "6.0.0",
     "@aftershock/capture": "workspace:*",
-    "@aftershock/solami": "workspace:*"
+    "@aftershock/solami": "workspace:*",
+    "@aftershock/reference": "workspace:*"
   }
 }

@@ -26,6 +26,9 @@ importers:
       '@aftershock/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@aftershock/reference':
+        specifier: workspace:*
+        version: link:../../packages/reference
       '@aftershock/solami':
         specifier: workspace:*
         version: link:../../packages/solami
