@@ -9,7 +9,7 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test packages/contracts/test/*.test.ts",
+    "test": "tsx --test packages/*/test/*.test.ts",
     "check": "pnpm typecheck && pnpm test"
   },
   "devDependencies": {
