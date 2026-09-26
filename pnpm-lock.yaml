@@ -48,6 +48,12 @@ importers:
         specifier: 4.6.5
         version: 4.6.5
 
+  packages/reference:
+    dependencies:
+      '@aftershock/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+
   packages/solami: {}
 
 packages:

@@ -60,3 +60,4 @@ export type AdapterDescription = z.infer<typeof adapterDescriptionSchema>;
 export type CheckResult = z.infer<typeof checkResultSchema>;
 
 export * from "./capture.js";
+export * from "./reference.js";
