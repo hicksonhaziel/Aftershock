@@ -24,7 +24,7 @@ Repeated delivery is useful here: an app must handle it without counting the sam
 
 ## Where we are in the build
 
-We are in **Phase 0: establish trustworthy inputs and interfaces**. Some capture tools needed by Phase 1 are already implemented. Phase 0 is not complete: broader coverage validation, external consumer selection, and the remaining adapter decisions are still open.
+We are in **Phase 0: establish trustworthy inputs and interfaces**. Some capture tools needed by Phase 1 are already implemented. Phase 0 is not complete: broader coverage validation, external consumer build validation, database setup, licensing, and the remaining adapter decisions are still open.
 
 **Phase 1** will connect recorded inputs to a sample application, show a duplicate-processing bug, export a test, and demonstrate a corrected version passing.
 
@@ -46,4 +46,10 @@ That means the recorded entries passed this check. It does not mean the short re
 
 The latest check compared the contents of our 25 saved streaming messages with the full ledger responses. All matched, including two examples of the newer transaction format. It checked addresses, instructions and transaction settings, using saved files without contacting Solami again.
 
-We now have evidence that these message fields survive recording and decoding. Turning instructions into application events, such as trades, is a separate step. Next we need to select the external app and decide exactly which events and output records its adapter supports before freezing that interface.
+We now have evidence that these message fields survive recording and decoding. Turning instructions into application events, such as trades, is a separate step. The external app is now selected; its first planned test focuses on Pump.fun trade records. Its build and replay bridge still need validation before we finalize the adapter interface.
+
+## Which real app will we test?
+
+We selected **solana-realtime-indexer**, an independently maintained app that reads Solana trades and stores them in a database. We pinned one exact code revision so future upstream changes cannot silently change our test.
+
+The first test will feed it the same supported trades twice. The expected result is unchanged stored trades and totals. After that, we will add a controlled stop after a database commit, restart it, and check recovery. Selecting the app is done; running those tests is still ahead. See the [integration plan](../integrations/solana-realtime-indexer/README.md).

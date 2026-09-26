@@ -118,3 +118,7 @@ It verifies both capture seals and writes a checksummed report linking their man
 This deliberately closes a capture process and creates a new subscription; it does not simulate a validator outage or prove gap-free delivery. An unseen transaction in this bounded experiment is not automatically a provider defect. Provider replay is labelled separately from live-only capture. Evidence stays in the ignored `.aftershock/reconnect/` directory.
 
 For a plain-language explanation of what is built and what comes next, read [Understanding Aftershock](docs/understanding-aftershock.md).
+
+## Selected external consumer
+
+The first external target is [shaurya35/solana-realtime-indexer](https://github.com/shaurya35/solana-realtime-indexer), pinned to `fdcb07381ec5c2a971f3107a7f9ec53542c1fb60` under MIT. The [integration plan](integrations/solana-realtime-indexer/README.md) records source findings, hashes, attribution, Pump.fun trade identity/projection, duplicate-replay assertions and required process controls. Selection is complete; build validation, the adapter and a conclusive external campaign remain outstanding.
