@@ -42,3 +42,13 @@ The initial writer stores one protobuf frame per independent gzip chunk and fsyn
 Capture metadata records successful/non-vote account-mention semantics, commitment, arrival order, monotonic offsets, slot and signature, resource limits, and termination reason. Loaded writable/read-only addresses participate in the local predicate check. Business-event extraction is not implemented. Missing metadata, invalid protobuf, and filter mismatches stop the capture explicitly.
 
 The mainnet check is performed on the configured RPC endpoint before the stream opens. It is separate evidence from the stream. The stream has no genesis response in this workflow. Reconnects and finalized interval membership are not yet established, and manifests say so.
+
+## Finalized signature membership
+
+The first reference lane retrieves block signature lists, not decoded full transactions. It verifies that recorded `(slot, signature)` observations are present after finalization and keeps this assertion separate from filtered capture completeness. An interval with complete reference retrieval does not imply that a transaction-limited stream capture is complete.
+
+Successful RPC bytes and their hashes are retained under a new reference ID linked to the immutable capture manifest. Enumeration failure is never converted into an empty block range; null blocks, invalid responses, and unfinalized intervals stay unresolved. Both transport and reference use Solami, so the evidence is not independent provider verification.
+
+The 26 September live check found all 25 recorded transactions in finalized blocks across slots 450672624–450672626. It made six successful RPC requests and retained 88,009 response bytes. Response hashes, the report hash, and the parent capture link were verified locally. This result does not complete Phase 0: filter-equivalent full reference projection, reconnect behavior, and consumer selection remain open.
+
+Protocol references: [getBlocks](https://solana.com/docs/rpc/http/getblocks), [getBlock](https://solana.com/docs/rpc/http/getblock).

@@ -6,7 +6,7 @@ Aftershock is being built to capture mainnet data through Solami, test isolated 
 
 ## Current status
 
-Early implementation: TypeScript workspace, draft contracts, RPC verification, a live slot-stream probe, bounded filtered transaction capture, and offline capture integrity verification. Fault execution, reduction, and the workbench are not implemented yet. Unit tests use synthetic inputs; live captures are kept separately in ignored local storage.
+Early implementation: TypeScript workspace, draft contracts, RPC verification, a live slot-stream probe, bounded filtered transaction capture, offline capture integrity verification, and finalized signature-membership checks. Fault execution, reduction, and the workbench are not implemented yet. Unit tests use synthetic inputs; live captures are kept separately in ignored local storage.
 
 ## Local setup
 
@@ -29,7 +29,9 @@ Set `SOLAMI_RPC_URL` in the ignored `.env` file to the endpoint issued by your S
 
 - `packages/contracts`: draft versioned envelopes, adapter descriptions, and check results.
 - `packages/capture`: compressed raw storage, capture sealing, and integrity verification.
-- `apps/cli`: diagnostics and bounded live capture commands.
+- `packages/solami`: bounded read-only RPC requests with sanitized failures.
+- `packages/reference`: finalized captured-signature membership and coverage reporting.
+- `apps/cli`: diagnostics, bounded live capture, and reference commands.
 - `docs/architecture.md`: implementation boundaries and unresolved decisions.
 
 ## Development checks
@@ -53,8 +55,26 @@ The example requests successful, non-vote transactions whose account list mentio
 
 Default limits are 25 transactions, 100 frames, 2 MiB raw data, and 10 seconds after subscription opens. The first limit reached stops capture. Each received frame is saved before decoding as an independent gzip-compressed protobuf chunk. A sealed manifest contains the filter, timestamps, slots, signatures, per-frame hashes, totals, stop reason, and SDK wire-schema version. A separate file hashes the manifest. Endpoint URLs and tokens are not included.
 
-The integrity command verifies the manifest and decompresses/checks every recorded frame. It does not establish finalized-chain completeness. The collector performs a separate mainnet RPC genesis check before connecting; it does not independently prove the streaming endpoint's cluster. Reference reconstruction and reconnect/replay testing remain pending.
+The integrity command verifies the manifest and decompresses/checks every recorded frame. It does not establish finalized-chain completeness. The collector performs a separate mainnet RPC genesis check before connecting; it does not independently prove the streaming endpoint's cluster. Full filtered reference reconstruction and reconnect/replay testing remain pending; captured-signature membership checks are available below.
 
 A duration-limited nonempty capture is a valid bounded observation, not a complete slot interval. Byte limits explicitly record a discarded boundary frame. Stream/decode/filter failures preserve prior evidence with a non-success stop reason; hard termination or storage failure may leave an unsealed directory. No automatic reconnect is attempted yet.
 
 Capture returns `0` for a nonempty capture stopped by a configured limit, `2` for setup/storage/stream/decoding/filter failure, and `3` for an empty capture, cancellation, or an unexpected stream end. Integrity verification has its own result and must not be confused with consumer correctness.
+
+## Check captured transactions against finalized blocks
+
+```sh
+pnpm reference:check .aftershock/captures/<capture-id>
+```
+
+This command verifies capture integrity, checks the RPC mainnet genesis and finalized tip, enumerates the capture's slot interval with `getBlocks`, and retrieves each returned block's signatures with finalized `getBlock`. It compares each recorded signature with the block at its recorded slot. Duplicate deliveries are counted without creating a false missing-transaction result.
+
+`PASS` means the recorded signatures were found in finalized blocks. It does **not** prove that the capture contains all matching transactions, that the program was invoked, that trade decoding is correct, or that any consumer is correct. Both streaming and reference evidence come from Solami; this is a different retrieval method, not independent provider trust. A transaction-capped capture can begin or end partway through a block.
+
+Unavailable, null, malformed, or unfinalized required evidence stays unresolved and prevents a pass. An absent signature in a successfully retrieved block is reported as a discrepancy, not automatically attributed to a provider defect. Slot numbers not returned by `getBlocks` are recorded explicitly; an unreturned slot containing a captured observation remains inconclusive.
+
+The first implementation accepts at most 16 slots, attempts each reference request at most twice, stops scheduling reference requests after 60 seconds, and has a 120-second process safety timeout. Each RPC response is capped at 2 MiB and retained successful responses at 16 MiB. Genesis/tip setup requests are made once. Error bodies and credentials are not retained.
+
+Evidence is saved under `.aftershock/references/<reference-id>/`: exact successful RPC response bodies with SHA-256 hashes, the request ledger, per-slot coverage, per-signature results, and the parent capture ID/manifest hash. `reference.json` has its own checksum. The original capture is never modified. A hard timeout can leave unsealed evidence.
+
+Exit codes: `0` membership passed, `1` an observed signature is absent from available finalized block evidence, `2` setup/storage failure, and `3` inconclusive evidence. Full finalized transaction projection and equivalent-filter reconstruction remain future work.
