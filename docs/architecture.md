@@ -15,11 +15,11 @@ Status: foundation established; provider and consumer interfaces remain provisio
 
 ## Next validation gates
 
-1. RPC endpoint access is verified; validate a bounded mainnet streaming subscription next.
+1. RPC access and bounded mainnet transaction streaming are verified.
 2. Yellowstone raw frames and one bounded reconnect experiment are validated; broader recovery coverage remains open.
-3. Retrieve a small finalized interval and document the exact filter predicate and missing evidence.
+3. Full-filter finalized reconstruction passed one interval; an offline field audit matched legacy/v0/v1 messages. Broader coverage and business-event decoding remain open.
 4. Select and pin a permissively licensed external consumer before freezing the adapter protocol.
-5. Implement capture manifests, raw storage, disposable PostgreSQL state, and the first clean/duplicate consumer workflow.
+5. Capture manifests and raw storage exist; implement disposable PostgreSQL state and the first clean/duplicate consumer workflow.
 
 The proposed web layer is React/Vite with Fastify and a persistent worker. Those packages will be introduced with their working features. Public hosted execution will run maintained examples; private consumer execution belongs on the developer's local runner.
 
@@ -41,7 +41,7 @@ The initial writer stores one protobuf frame per independent gzip chunk and fsyn
 
 Capture metadata records successful/non-vote account-mention semantics, commitment, arrival order, monotonic offsets, slot and signature, resource limits, and termination reason. Loaded writable/read-only addresses participate in the local predicate check. Business-event extraction is not implemented. Missing metadata, invalid protobuf, and filter mismatches stop the capture explicitly.
 
-The mainnet check is performed on the configured RPC endpoint before the stream opens. It is separate evidence from the stream. The stream has no genesis response in this workflow. Reconnects and finalized interval membership are not yet established, and manifests say so.
+The mainnet check is performed on the configured RPC endpoint before the stream opens. It is separate evidence from the stream. The stream has no genesis response in this workflow. Capture manifests deliberately leave reference coverage unassessed; separate reference and reconnect reports carry their own evidence.
 
 ## Finalized signature membership
 
@@ -49,7 +49,7 @@ The first reference lane retrieves block signature lists, not decoded full trans
 
 Successful RPC bytes and their hashes are retained under a new reference ID linked to the immutable capture manifest. Enumeration failure is never converted into an empty block range; null blocks, invalid responses, and unfinalized intervals stay unresolved. Both transport and reference use Solami, so the evidence is not independent provider verification.
 
-The 26 September live check found all 25 recorded transactions in finalized blocks across slots 450672624–450672626. It made six successful RPC requests and retained 88,009 response bytes. Response hashes, the report hash, and the parent capture link were verified locally. This result does not complete Phase 0: filter-equivalent full reference projection, broader reconnect coverage, and consumer selection remain open.
+The 26 September live check found all 25 recorded transactions in finalized blocks across slots 450672624–450672626. It made six successful RPC requests and retained 88,009 response bytes. Response hashes, the report hash, and the parent capture link were verified locally. This result does not complete Phase 0: broader reference/reconnect coverage and consumer selection remain open. Full filtered transaction reconstruction was subsequently validated; business-event projection remains open.
 
 Protocol references: [getBlocks](https://solana.com/docs/rpc/http/getblocks), [getBlock](https://solana.com/docs/rpc/http/getblock).
 
@@ -58,3 +58,11 @@ Protocol references: [getBlocks](https://solana.com/docs/rpc/http/getblocks), [g
 On 26 September, the experiment recorded 25 live transactions, closed that capture process, and requested replay from the last observed slot in a new process. All 25 known boundary transactions were received again among 200 replay-session deliveries, and later-slot data arrived. The baseline contained 145,389 raw bytes and the second capture 1,177,419 raw bytes. Both captures and the report links passed integrity verification.
 
 This is a single observed provider replay case. It does not prove complete recovery, transaction uniqueness across all provider traffic, or consumer idempotency. Each individual capture still records zero internal reconnects; the experiment report links the separate processes and their requested replay boundary.
+
+## Streaming message compatibility scope
+
+The installed Yellowstone 7.0.1 schema includes the optional message `config` used by v1. Version is inferred from config presence, then the versioned flag; it is not a universal future-version detector. We compare that inference with explicit RPC transaction versions. Raw protobuf remains preserved even for fields the decoder does not expose.
+
+`compatibility:check` audits saved, linked evidence without network access. The first run matched five legacy, eighteen v0 and two v1 transactions on message fields, loaded accounts and success status. Unknown or incomplete evidence stays inconclusive; malformed or tampered source artifacts fail setup. The comparison excludes business events, balance arithmetic, logs and inner instructions. This validates the current message input path for these observations, not the future application's projection.
+
+Schema source: [Yellowstone storage protobuf](https://github.com/rpcpool/yellowstone-grpc/blob/master/yellowstone-grpc-proto/proto/solana-storage.proto). The next adapter decision depends on selecting and pinning an external consumer and declaring its event identity and output contract.

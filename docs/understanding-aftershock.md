@@ -41,3 +41,9 @@ The product's value comes when these recordings help a developer reproduce an in
 Think of a block as a page in a ledger. Our recorder saved 25 entries, then stopped. We now read the full three pages it touched and apply the same account filter: there were 29 matching entries, including all 25 we saved. The other four were on the last page, which our recording only partly covered.
 
 That means the recorded entries passed this check. It does not mean the short recording contains every entry, or that an application handles them correctly. The full-block reader also now handles transaction version 1, which the live blocks required.
+
+## Can we read the messages correctly?
+
+The latest check compared the contents of our 25 saved streaming messages with the full ledger responses. All matched, including two examples of the newer transaction format. It checked addresses, instructions and transaction settings, using saved files without contacting Solami again.
+
+We now have evidence that these message fields survive recording and decoding. Turning instructions into application events, such as trades, is a separate step. Next we need to select the external app and decide exactly which events and output records its adapter supports before freezing that interface.

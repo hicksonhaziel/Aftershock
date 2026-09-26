@@ -91,7 +91,19 @@ The mode accepts at most four slots, caps each response at 16 MiB and total reta
 
 Live validation on September 26, 2026 reconstructed 29 matching transactions across three blocks; all 25 captured transactions matched. Four additional matches were in the final boundary block. The responses contained legacy, v0, and v1 transactions. Report, response hashes, and capture provenance were verified. An earlier request limited to version 0 correctly remained inconclusive on RPC error -32015.
 
-Format semantics follow [Solana versioned transactions](https://solana.com/docs/core/transactions/versioned-transactions); simple-vote classification follows the [Solana SDK checker](https://github.com/anza-xyz/solana-sdk/blob/master/transaction/src/simple_vote_transaction_checker.rs). Both capture and reference still rely on Solami. More intervals and stream-schema compatibility checks remain necessary before broader coverage claims.
+Format semantics follow [Solana versioned transactions](https://solana.com/docs/core/transactions/versioned-transactions); simple-vote classification follows the [Solana SDK checker](https://github.com/anza-xyz/solana-sdk/blob/master/transaction/src/simple_vote_transaction_checker.rs). Both capture and reference still rely on Solami. More intervals and checks beyond the message fields audited below remain necessary before broader coverage claims.
+
+## Audit streaming message compatibility offline
+
+```sh
+pnpm compatibility:check .aftershock/captures/<capture-id> .aftershock/references/<reference-id>
+```
+
+Supply the capture and its `--full-filter` reference. This makes no network requests. It verifies capture integrity, reference/response checksums and the parent link, then compares each recorded transaction with its finalized RPC representation. The comparison covers signatures, inferred message version, header, static and loaded account addresses, blockhash, top-level instructions, lookup references, version 1 configuration, and success status.
+
+Reports under `.aftershock/compatibility/<audit-id>/` carry hashes linking both source artifacts. Exit codes are `0` all recorded transactions match, `1` a field mismatch, `2` invalid setup/integrity, and `3` missing or unsupported evidence. An empty capture cannot pass. Unsafe numeric reference values cannot establish exact integer equality.
+
+The first offline audit passed all 25 recorded transactions: five legacy, eighteen v0 and two v1. The installed Yellowstone SDK already preserves version 1 configuration, including integer priority fees as decimal strings. This does not certify balances, logs, inner instructions, business-event decoding, future protocol fields, or capture completeness. Tests cover lost v1 configuration, altered instruction/address fields, missing evidence and checksum tampering.
 
 ## Observe reconnect and replay
 
