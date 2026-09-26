@@ -17,7 +17,8 @@
     "capture": "tsx apps/cli/src/capture.ts",
     "capture:verify": "tsx apps/cli/src/verify-capture.ts",
     "reference:check": "tsx apps/cli/src/reference-check.ts",
-    "reconnect:check": "tsx apps/cli/src/reconnect-check.ts"
+    "reconnect:check": "tsx apps/cli/src/reconnect-check.ts",
+    "compatibility:check": "tsx apps/cli/src/compatibility-check.ts"
   },
   "devDependencies": {
     "@types/node": "22.18.6",
