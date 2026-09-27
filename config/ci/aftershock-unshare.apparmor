@@ -1,0 +1,7 @@
+abi <abi/4.0>,
+include <tunables/global>
+
+# GitHub's disposable CI VM only: allow the utility to create isolated namespaces.
+profile aftershock-ci-unshare /usr/bin/unshare flags=(unconfined) {
+  userns,
+}

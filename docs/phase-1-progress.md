@@ -12,6 +12,8 @@ The supervisor runs each adapter in a new Linux user/network namespace with a mi
 
 Protocol tests use an explicitly synthetic adapter, not a maintained consumer or a persistence campaign. The supervisor currently rejects unsolicited notifications, including crash barriers. Process termination on timeout/disposal is cleanup, not evidence of an injected crash at a durable commit boundary.
 
+CI preflights namespace creation. When the disposable Ubuntu CI VM restricts it, the workflow loads an AppArmor profile scoped to `/usr/bin/unshare`, following [Ubuntu's per-application user-namespace guidance](https://documentation.ubuntu.com/release-notes/24.04/). It then requires the preflight and all isolation tests to pass. This does not change the user's host policy or disable network isolation.
+
 ## Normalize a saved capture
 
 Requires Linux with `/usr/bin/unshare`, enabled unprivileged user/network namespaces, and the exact verified decoder build named in `integrations/solana-realtime-indexer/trade-decoder-lock.json`.

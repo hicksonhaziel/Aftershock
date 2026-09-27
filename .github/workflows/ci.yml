@@ -15,6 +15,16 @@ jobs:
           node-version-file: .node-version
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Enable and verify isolated process tests
+        shell: bash
+        run: |
+          if ! /usr/bin/unshare --user --map-root-user --net true; then
+            for profile in /etc/apparmor.d/unshare /etc/apparmor.d/unshare-userns-restrict; do
+              if [ -f "$profile" ]; then sudo apparmor_parser -R "$profile"; fi
+            done
+            sudo apparmor_parser -r config/ci/aftershock-unshare.apparmor
+          fi
+          /usr/bin/unshare --user --map-root-user --net true
       - run: pnpm check
       - run: pnpm db:up
       - run: pnpm db:check
