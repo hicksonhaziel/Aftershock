@@ -6,7 +6,7 @@ Aftershock is being built to capture mainnet data through Solami, test isolated 
 
 ## Current status
 
-**Phase 0 complete; Phase 1 started.** Live capture/reference/replay checks, versioned contracts, isolated PostgreSQL setup and scoped external decoder replay are verified. Consumer fault execution, reduction, portable regression execution and the workbench are not implemented yet. See the [acceptance report](docs/phase-0-report.md) for evidence and scope. The first Phase 1 batch adds [trade projection and discrepancy checks](docs/trade-projection.md). Synthetic tests, attributed upstream fixtures and live captures remain explicitly distinct.
+**Phase 0 complete; Phase 1 started.** Live capture/reference/replay checks, versioned contracts, isolated PostgreSQL setup and scoped external decoder replay are verified. Consumer fault execution, reduction, portable regression execution and the workbench are not implemented yet. See the [acceptance report](docs/phase-0-report.md) for evidence and scope. Phase 1 now includes [trade projection checks](docs/trade-projection.md), saved-capture normalization and a tested process supervisor; see [progress and limits](docs/phase-1-progress.md). Synthetic tests, attributed upstream fixtures and live captures remain explicitly distinct.
 
 ## Local setup
 
@@ -30,6 +30,7 @@ Set `SOLAMI_RPC_URL` in the ignored `.env` file to the endpoint issued by your S
 - `packages/contracts`: versioned capture, execution, protocol and regression-artifact contracts.
 - `packages/capture`: compressed raw storage, capture sealing, and integrity verification.
 - `packages/solami`: bounded read-only RPC requests with sanitized failures.
+- `packages/runner`: isolated adapter process lifecycle and protocol enforcement.
 - `packages/projection`: expected trade state and concrete event/aggregate discrepancies.
 - `packages/reference`: finalized captured-signature membership and coverage reporting.
 - `apps/cli`: diagnostics, bounded live capture, and reference commands.

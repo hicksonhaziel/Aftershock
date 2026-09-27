@@ -1,0 +1,18 @@
+--- a/src/processors/pumpfun.rs
++++ b/src/processors/pumpfun.rs
+@@ -61,0 +62,15 @@
++        // Aftershock observation only; the ordinary Carbon decoder remains authoritative.
++        if std::env::var_os("AFTERSHOCK_TRADE_AUDIT").is_some() {
++            println!("AFTERSHOCK_TRADE_AUDIT={}", serde_json::json!({
++                "signature": meta.transaction_metadata.signature.to_string(),
++                "instructionPath": meta.absolute_path,
++                "ordinal": "0",
++                "slot": meta.transaction_metadata.slot.to_string(),
++                "mint": trade.mint.to_string(),
++                "trader": trade.user.to_string(),
++                "side": if trade.is_buy { "buy" } else { "sell" },
++                "solLamports": trade.sol_amount.to_string(),
++                "tokenBaseUnits": trade.token_amount.to_string()
++            }));
++        }
++

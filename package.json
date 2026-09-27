@@ -23,7 +23,8 @@
     "db:check": "tsx apps/cli/src/database.ts check",
     "db:down": "tsx apps/cli/src/database.ts down",
     "capture:export-replay": "tsx apps/cli/src/export-replay.ts",
-    "format:check": "node scripts/check-format.mjs"
+    "format:check": "node scripts/check-format.mjs",
+    "capture:normalize": "tsx apps/cli/src/normalize-trades.ts"
   },
   "devDependencies": {
     "@types/node": "22.18.6",

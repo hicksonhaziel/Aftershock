@@ -26,6 +26,9 @@ importers:
       '@aftershock/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@aftershock/projection':
+        specifier: workspace:*
+        version: link:../../packages/projection
       '@aftershock/reference':
         specifier: workspace:*
         version: link:../../packages/reference
@@ -58,6 +61,12 @@ importers:
         version: link:../contracts
 
   packages/reference:
+    dependencies:
+      '@aftershock/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+
+  packages/runner:
     dependencies:
       '@aftershock/contracts':
         specifier: workspace:*

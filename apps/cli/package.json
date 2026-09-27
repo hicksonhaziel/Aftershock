@@ -9,6 +9,7 @@
     "bs58": "6.0.0",
     "@aftershock/capture": "workspace:*",
     "@aftershock/solami": "workspace:*",
-    "@aftershock/reference": "workspace:*"
+    "@aftershock/reference": "workspace:*",
+    "@aftershock/projection": "workspace:*"
   }
 }
