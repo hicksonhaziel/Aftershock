@@ -20,12 +20,25 @@ Another saved fixture showed multiple trade events inside a single transaction. 
 
 Reading events successfully does not yet prove the app stores them correctly after duplicates or crashes. Those are the tests we build next.
 
+## Phase 1 is finished
+
+We recorded fresh Solana transactions and read 19 supported token trades. Six other transaction messages used a format our chosen decoder cannot handle, so we clearly excluded them.
+
+We sent those 19 trades to two sample apps. Both got the right answer when each message arrived once. Then we repeated one transaction:
+
+- The deliberately buggy app kept 19 trade records but counted an extra 0.010564641 SOL in its totals.
+- The corrected app kept both the records and totals right.
+
+We saved that example as a test, copied it outside the project, and ran it without Solami keys or internet access. The buggy app failed the test; the corrected app passed.
+
+These were saved messages sent to test apps. We did not buy tokens, spend SOL or send new transactions on Solana.
+
 ## What comes next
 
-Phase 1 connects the pieces: saved data → sample app → repeated message → incorrect total → saved regression test → corrected app passing.
+Phase 2 will stop a sample app after it saves a trade, restart it, and check whether it recovers without counting anything twice. That is a harder test than simply repeating a message.
 
-Later phases add real crash/restart tests, reduce failures into smaller examples, build the visual dashboard, finish external-app campaigns and prepare the public demo.
+Later phases shrink failing examples, build the visual dashboard, finish external-app campaigns and prepare the public demo.
 
 Solami worked in our live checks. When the trial expires, you can request another one; the judges will use their own keys. Our offline development can continue using the saved recordings.
 
-The technical evidence and remaining limits are in the [Phase 0 report](phase-0-report.md). Your private planning files, credentials and raw recordings stay out of GitHub.
+The technical evidence and remaining limits are in the [Phase 0 report](phase-0-report.md) and [Phase 1 report](phase-1-report.md). Your private planning files, credentials and raw recordings stay out of GitHub.

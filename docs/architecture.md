@@ -1,6 +1,6 @@
 # Initial architecture decisions
 
-Status: Phase 0 accepted September 27, 2026. Initial version 1 interfaces are defined in the adapter protocol; the runner and application workflow are Phase 1 work. See `phase-0-report.md`.
+Status: Phases 0 and 1 accepted for the declared CLI scope. Version 1 interfaces are implemented by the isolated runner and maintained PostgreSQL samples. See [Phase 1 acceptance](phase-1-report.md) and [workflow](phase-1-workflow.md).
 
 ## Established boundaries
 
@@ -10,16 +10,16 @@ Status: Phase 0 accepted September 27, 2026. Initial version 1 interfaces are de
 - Delivery identity and business-event identity are distinct. A transaction signature is not a universal business-event key.
 - Adapter acknowledgements explicitly distinguish receipt, processing, and durable commit.
 - Assertions carry their checking lane and evidence coverage separately from their verdict.
-- The future supervisor owns process termination. An in-process exception or graceful stop is not a crash test.
+- The supervisor owns process termination. An in-process exception or graceful stop is not a crash test.
 - Capture files and local credentials are ignored. Credentials must never enter exported metadata.
 
 ## Next implementation gates
 
-1. Implement the isolated consumer supervisor against `adapter-protocol.md`.
-2. Build maintained faulty/fixed samples using the run-owned PostgreSQL schema.
-3. Turn the declared event projection into clean/duplicate assertions and a portable regression workflow.
-4. Extend the validated external decoder bridge into a full persistence adapter; preserve explicit v1 exclusions until its dependencies support that version.
-5. Add real commit-barrier process-kill evidence, reduction and the workbench in their planned phases.
+1. Add real commit-barrier process termination, restart/recovery and checkpoint evidence in Phase 2.
+2. Extend the validated external decoder bridge into a full persistence adapter; preserve explicit v1 exclusions until its dependencies support that version.
+3. Add dependency-aware reduction, the workbench and broader reliability in their planned phases.
+
+The implemented CLI path uses immutable captured frames, pinned decoder observation, declared expected state, separate clean/duplicate runs in owned network-disabled PostgreSQL containers, concrete discrepancies and bundled offline regression commands. The maintained fixed sample only adds newly inserted event effects to totals. See the workflow guide for runtime/dependency limits.
 
 The proposed web layer is React/Vite with Fastify and a persistent worker. Those packages will be introduced with their working features. Public hosted execution will run maintained examples; private consumer execution belongs on the developer's local runner.
 
@@ -39,7 +39,7 @@ The dedicated gRPC x-token was subsequently verified with the same three-slot pr
 
 The initial writer stores one protobuf frame per independent gzip chunk and fsyncs it before decoding. This keeps the first implementation bounded and preserves wire bytes; multi-frame batching and compression optimization are deferred until measured. Captures have an immutable application-level seal (exclusive writes and append rejection), not filesystem write protection. Hashes detect corruption, not malicious replacement of both data and checksums.
 
-Capture metadata records successful/non-vote account-mention semantics, commitment, arrival order, monotonic offsets, slot and signature, resource limits, and termination reason. Loaded writable/read-only addresses participate in the local predicate check. Business-event extraction is not implemented. Missing metadata, invalid protobuf, and filter mismatches stop the capture explicitly.
+Capture metadata records successful/non-vote account-mention semantics, commitment, arrival order, monotonic offsets, slot and signature, resource limits, and termination reason. Loaded writable/read-only addresses participate in the local predicate check. Business-event extraction is a separate pinned decoder/normalization step; it does not modify raw captures. Missing metadata, invalid protobuf, and filter mismatches stop the capture explicitly.
 
 The mainnet check is performed on the configured RPC endpoint before the stream opens. It is separate evidence from the stream. The stream has no genesis response in this workflow. Capture manifests deliberately leave reference coverage unassessed; separate reference and reconnect reports carry their own evidence.
 
@@ -65,4 +65,4 @@ The installed Yellowstone 7.0.1 schema includes the optional message `config` us
 
 `compatibility:check` audits saved, linked evidence without network access. The first run matched five legacy, eighteen v0 and two v1 transactions on message fields, loaded accounts and success status. Unknown or incomplete evidence stays inconclusive; malformed or tampered source artifacts fail setup. The comparison excludes business events, balance arithmetic, logs and inner instructions. This validates the current message input path for these observations, not the future application's projection.
 
-Schema source: [Yellowstone storage protobuf](https://github.com/rpcpool/yellowstone-grpc/blob/master/yellowstone-grpc-proto/proto/solana-storage.proto). The selected consumer and scoped event/output contract are documented in [the integration plan](../integrations/solana-realtime-indexer/README.md). Its build and scoped replay bridge are now validated; version 1 protocol definitions are in `adapter-protocol.md`, while process-control implementation remains ahead.
+Schema source: [Yellowstone storage protobuf](https://github.com/rpcpool/yellowstone-grpc/blob/master/yellowstone-grpc-proto/proto/solana-storage.proto). The selected consumer and scoped event/output contract are documented in [the integration plan](../integrations/solana-realtime-indexer/README.md). Its build and scoped replay bridge are now validated; version 1 protocol definitions are in `adapter-protocol.md`, and process control is implemented for the Phase 1 maintained samples.

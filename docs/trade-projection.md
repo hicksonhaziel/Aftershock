@@ -14,4 +14,4 @@ These are application assertion results only. They do not establish finality, de
 
 Seven synthetic tests cover multiple-event identity, repeated observations, large integer precision, separate mint/direction totals, unique rows with inflated totals, row/aggregate discrepancies, semantic ordering/provenance independence, empty inputs and invalid evidence. Run them with `pnpm exec tsx --test packages/projection/test/projection.test.ts`; `pnpm check` includes them with the repository suite.
 
-Next: connect supported authentic event decoding, then implement isolated process execution and maintained faulty/fixed samples. The fresh-capture → duplicate failure → portable offline regression → fixed pass acceptance gate remains open. Real process-crash recovery belongs to Phase 2.
+This foundation is now connected to supported authentic decoding, isolated PostgreSQL samples and the [Phase 1 workflow](phase-1-workflow.md). Its [acceptance gate passed](phase-1-report.md). Real process-crash recovery belongs to Phase 2.

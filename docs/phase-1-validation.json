@@ -1,0 +1,148 @@
+{
+  "schemaVersion": 1,
+  "validatedAtUtc": "2026-09-27T22:59:14.568233+00:00",
+  "phase": 1,
+  "status": "complete-for-declared-scope",
+  "implementationRevision": "24b1f8b5f872ace40c49d4a41a1ef8c0f66e5638",
+  "capture": {
+    "captureId": "b65159a0-3812-408a-9a6a-eae1e9cd373d",
+    "manifestSha256": "1ac0780d388854935fca9a2c1276fe7744fdcdcbe31f3a142d52154f3c40c83e",
+    "source": "fresh-live-solami-mainnet",
+    "slots": [
+      "451132920",
+      "451132921"
+    ],
+    "transactions": 25,
+    "rawBytes": 160053,
+    "selectedLegacyV0": 19,
+    "explicitV1Exclusions": 6,
+    "decodedEvents": 19
+  },
+  "reference": {
+    "referenceId": "84147a00-a3dc-45c0-ab4e-a9123e7771b9",
+    "finalizedCapturedMembership": "PASS",
+    "present": 25,
+    "absent": 0,
+    "unresolved": 0,
+    "fullFilterMatches": 39,
+    "captureCompleteness": "not-established"
+  },
+  "campaign": {
+    "campaignId": "1d014d18-40da-46b3-9d61-28ac84eeaf3e",
+    "seed": "phase1-fresh",
+    "verdict": "PASS",
+    "reportSha256": "28c9d9ee95054c94ac52d0b9c38347010aaa2f64a2a76694c6880ff6d294280e",
+    "runs": [
+      {
+        "name": "baseline",
+        "runId": "f1e6b8a0-6263-4e32-a7e7-8937f4633102",
+        "verdict": "PASS",
+        "deliveries": 19,
+        "eventRows": 19,
+        "appliedFaults": [],
+        "resetVerified": true,
+        "cleanup": "removed"
+      },
+      {
+        "name": "faulty",
+        "runId": "4b228a96-2b16-4557-845c-61bf6af01389",
+        "verdict": "FAIL",
+        "deliveries": 20,
+        "eventRows": 19,
+        "appliedFaults": [
+          "applied"
+        ],
+        "resetVerified": true,
+        "cleanup": "removed"
+      },
+      {
+        "name": "fixedBaseline",
+        "runId": "b628d7a7-5095-4963-b432-044897fc0226",
+        "verdict": "PASS",
+        "deliveries": 19,
+        "eventRows": 19,
+        "appliedFaults": [],
+        "resetVerified": true,
+        "cleanup": "removed"
+      },
+      {
+        "name": "fixed",
+        "runId": "5f02cc83-8dae-4571-a693-aa74519bc0db",
+        "verdict": "PASS",
+        "deliveries": 20,
+        "eventRows": 19,
+        "appliedFaults": [
+          "applied"
+        ],
+        "resetVerified": true,
+        "cleanup": "removed"
+      }
+    ],
+    "differences": [
+      {
+        "field": "count",
+        "expected": "1",
+        "actual": "2",
+        "delta": "1"
+      },
+      {
+        "field": "solLamports",
+        "expected": "10564641",
+        "actual": "21129282",
+        "delta": "10564641"
+      },
+      {
+        "field": "tokenBaseUnits",
+        "expected": "376266103646",
+        "actual": "752532207292",
+        "delta": "376266103646"
+      }
+    ]
+  },
+  "offline": {
+    "relocatedOutsideRepository": true,
+    "providerCredentialsPassed": false,
+    "packageInstallationRequired": false,
+    "network": "runner/adapter user-network namespaces; PostgreSQL network none",
+    "runtimeLockSha256": "18d0743408ea7643e0ac13f62b4762fb0fd909c236856579f4523d0a3341a2f9",
+    "commands": [
+      {
+        "mode": "test",
+        "variant": "faulty",
+        "exitCode": 1
+      },
+      {
+        "mode": "test",
+        "variant": "fixed",
+        "exitCode": 0
+      },
+      {
+        "mode": "reproduce",
+        "variant": "faulty",
+        "exitCode": 0
+      },
+      {
+        "mode": "reproduce",
+        "variant": "fixed",
+        "exitCode": 1
+      }
+    ]
+  },
+  "verification": {
+    "unitProtocolIntegrityTests": 71,
+    "databaseOfflineIntegrationTests": 2,
+    "typecheck": "PASS",
+    "formatCheck": "PASS",
+    "credentialScan": "PASS",
+    "ciRun": "https://github.com/hicksonhaziel/Aftershock/actions/runs/36356955623",
+    "ciConclusion": "success"
+  },
+  "limitations": [
+    "Selected Pump.fun legacy/v0 CPI TradeEvent family only; six v1 inputs explicitly excluded",
+    "Expected values share the external decoder; not independent decoder validation",
+    "No chain-completeness or universal determinism claim",
+    "Linux, exact Node version/architecture, local Docker and cached pinned PostgreSQL image required",
+    "Intentional maintained sample defect; external consumer persistence campaign pending",
+    "Real crash barriers/recovery, reduction and workbench are later phases"
+  ]
+}

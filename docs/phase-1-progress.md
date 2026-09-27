@@ -1,6 +1,6 @@
 # Phase 1 progress
 
-Phase 1 implementation now includes the maintained PostgreSQL samples, seeded duplicate campaign and standalone offline export. Final acceptance verification is being recorded. See the [workflow guide](phase-1-workflow.md) for commands and boundaries.
+Phase 1 is complete for the declared CLI scope. The [acceptance report](phase-1-report.md) records the fresh-data campaign and offline faulty/fixed outcomes. See the [workflow guide](phase-1-workflow.md) for commands and boundaries.
 
 ## Implemented foundations
 
@@ -36,4 +36,4 @@ For another platform/build, the binary digest may differ. Rebuild the pinned sou
 
 ## Acceptance verification
 
-Fresh capture, clean/duplicate/fixed outcomes, relocated offline execution, integrity/dependency failures and cleanup must all pass before Phase 1 is marked complete. Real durable-commit crash/recovery remains Phase 2.
+Fresh capture, clean/duplicate/fixed outcomes, relocated offline execution, integrity/dependency failures and cleanup passed. The receipt is in [phase-1-validation.json](phase-1-validation.json). Real durable-commit crash/recovery remains Phase 2.
