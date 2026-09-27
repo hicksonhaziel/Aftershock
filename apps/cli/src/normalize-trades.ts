@@ -87,6 +87,7 @@ export function normalizeCapture(captureDirectory: string, binary: string, allow
     const directory = join(process.env.AFTERSHOCK_DATA_DIR || join(root, ".aftershock"), "normalized", randomUUID());
     mkdirSync(join(directory, "raw"), { recursive: true, mode: 0o700 });
     for (let i = 0; i < sources.length; i++) writeFileSync(join(directory, `raw/${sources[i]!.sourceSequence}.pb`), rawInputs[i]!, { flag: "wx", mode: 0o600, flush: true });
+    writeFileSync(join(directory, "capture-manifest.json"), readFileSync(join(captureDirectory, "manifest.json")), { flag: "wx", mode: 0o600, flush: true });
     const files: Record<string, string> = { "events.json": JSON.stringify(events, null, 2) + "\n", "expected.json": JSON.stringify(expected, null, 2) + "\n" };
     const report = { schemaVersion: 1, source: "live-derived", captureSource: manifest.source,
       parentCaptureId: manifest.captureId, parentManifestSha256: manifestHash,

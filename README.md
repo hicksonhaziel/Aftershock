@@ -6,7 +6,8 @@ Aftershock is being built to capture mainnet data through Solami, test isolated 
 
 ## Current status
 
-**Phase 0 complete; Phase 1 started.** Live capture/reference/replay checks, versioned contracts, isolated PostgreSQL setup and scoped external decoder replay are verified. Consumer fault execution, reduction, portable regression execution and the workbench are not implemented yet. See the [acceptance report](docs/phase-0-report.md) for evidence and scope. Phase 1 now includes [trade projection checks](docs/trade-projection.md), saved-capture normalization and a tested process supervisor; see [progress and limits](docs/phase-1-progress.md). Synthetic tests, attributed upstream fixtures and live captures remain explicitly distinct.
+**Phase 0 complete; Phase 1 acceptance verification in progress.** The CLI now supports saved-capture normalization, isolated PostgreSQL samples, a seeded duplicate-delivery campaign and a standalone offline regression export. See the [workflow guide](docs/phase-1-workflow.md) and [progress](docs/phase-1-progress.md). Real crash recovery, reduction and the workbench remain later work. Intentional sample defects are separate from the independently maintained external decoder.
+
 
 ## Local setup
 

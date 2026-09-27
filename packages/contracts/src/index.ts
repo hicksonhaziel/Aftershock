@@ -4,3 +4,4 @@ export * from "./reference.js";
 export * from "./execution.js";
 export * from "./projection.js";
 export * from "./normalization.js";
+export * from "./regression.js";

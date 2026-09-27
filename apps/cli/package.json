@@ -10,6 +10,7 @@
     "@aftershock/capture": "workspace:*",
     "@aftershock/solami": "workspace:*",
     "@aftershock/reference": "workspace:*",
-    "@aftershock/projection": "workspace:*"
+    "@aftershock/projection": "workspace:*",
+    "@aftershock/runner": "workspace:*"
   }
 }

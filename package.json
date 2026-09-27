@@ -24,12 +24,18 @@
     "db:down": "tsx apps/cli/src/database.ts down",
     "capture:export-replay": "tsx apps/cli/src/export-replay.ts",
     "format:check": "node scripts/check-format.mjs",
-    "capture:normalize": "tsx apps/cli/src/normalize-trades.ts"
+    "capture:normalize": "tsx apps/cli/src/normalize-trades.ts",
+    "build:regression": "node scripts/build-regression.mjs",
+    "campaign": "tsx apps/cli/src/campaign.ts",
+    "regression:test": "node .aftershock/build/regression.mjs test",
+    "regression:reproduce": "node .aftershock/build/regression.mjs reproduce",
+    "test:regression": "pnpm build:regression && tsx --test packages/runner/integration/*.test.ts"
   },
   "devDependencies": {
     "@types/node": "22.18.6",
     "tsx": "4.23.15",
-    "typescript": "7.0.2"
+    "typescript": "7.0.2",
+    "esbuild": "0.28.2"
   },
   "license": "MIT"
 }

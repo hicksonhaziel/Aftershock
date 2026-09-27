@@ -1,6 +1,6 @@
 # Phase 1 progress
 
-Phase 1 is in progress. The fresh-capture → clean baseline → duplicate failure → portable regression → fixed pass gate has not been completed.
+Phase 1 implementation now includes the maintained PostgreSQL samples, seeded duplicate campaign and standalone offline export. Final acceptance verification is being recorded. See the [workflow guide](phase-1-workflow.md) for commands and boundaries.
 
 ## Implemented foundations
 
@@ -34,6 +34,6 @@ On September 27, 2026, the saved Phase 0 capture `991da3d0-526d-4c74-b00b-3b6f49
 
 For another platform/build, the binary digest may differ. Rebuild the pinned source with both observation patches and the pinned compiler/lockfile, revalidate it and deliberately update the decoder lock before execution; the normalizer never accepts an arbitrary binary silently.
 
-## Next work
+## Acceptance verification
 
-Implement maintained faulty/fixed trade consumers with disposable durable state, connect normalization and supervisor to a campaign command, record configured/applied duplicate faults and delivery traces, and gate baseline/faulted results separately. Then export and run the same case offline against both builds. A fresh capture is required for the Phase 1 acceptance gate. Real durable-commit crash/recovery remains Phase 2.
+Fresh capture, clean/duplicate/fixed outcomes, relocated offline execution, integrity/dependency failures and cleanup must all pass before Phase 1 is marked complete. Real durable-commit crash/recovery remains Phase 2.

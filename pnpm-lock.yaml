@@ -11,6 +11,9 @@ importers:
       '@types/node':
         specifier: 22.18.6
         version: 22.18.6
+      esbuild:
+        specifier: 0.28.2
+        version: 0.28.2
       tsx:
         specifier: 4.23.15
         version: 4.23.15
@@ -32,6 +35,9 @@ importers:
       '@aftershock/reference':
         specifier: workspace:*
         version: link:../../packages/reference
+      '@aftershock/runner':
+        specifier: workspace:*
+        version: link:../../packages/runner
       '@aftershock/solami':
         specifier: workspace:*
         version: link:../../packages/solami
@@ -41,6 +47,18 @@ importers:
       bs58:
         specifier: 6.0.0
         version: 6.0.0
+
+  examples/trade-ledger:
+    dependencies:
+      '@aftershock/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@aftershock/projection':
+        specifier: workspace:*
+        version: link:../../packages/projection
+      '@aftershock/runner':
+        specifier: workspace:*
+        version: link:../../packages/runner
 
   packages/capture:
     dependencies:
@@ -71,6 +89,9 @@ importers:
       '@aftershock/contracts':
         specifier: workspace:*
         version: link:../contracts
+      '@aftershock/projection':
+        specifier: workspace:*
+        version: link:../projection
 
   packages/solami: {}
 

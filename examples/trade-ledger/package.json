@@ -1,0 +1,7 @@
+{
+  "name": "@aftershock/trade-ledger",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": { "@aftershock/contracts": "workspace:*", "@aftershock/projection": "workspace:*", "@aftershock/runner": "workspace:*" }
+}
