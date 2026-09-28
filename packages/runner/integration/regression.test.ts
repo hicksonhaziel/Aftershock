@@ -8,7 +8,7 @@ import { PUMPFUN_PROGRAM, TRADE_PROJECTION } from "@aftershock/contracts";
 import { createCase, executeCase, sealFailure, exportCase, digest, loadCase } from "../src/regression.js";
 import { docker } from "../src/postgres.js";
 const root = resolve(import.meta.dirname, "../../..");
-function setup() {
+function setup(mode: Parameters<typeof createCase>[5] = "duplicate") {
   const directory = mkdtempSync(join(tmpdir(), "aftershock-regression-test-"));
   const raw = Buffer.from("SYNTHETIC trade input; not blockchain evidence"); writeFileSync(join(directory, "raw.pb"), raw);
   const ref = { path: "raw.pb", sha256: digest(raw) }, signature = "1".repeat(64);
@@ -18,7 +18,7 @@ function setup() {
   const input = { schemaVersion: 1, projectionVersion: TRADE_PROJECTION, source: "synthetic", parent: null, evidence: [],
     coverage: { status: "not-assessed", scope: "Synthetic multi-event regression fixture", startSlot: "100", endSlot: "100", missingSlots: [], exclusions: [] },
     deliveries: [{ inputId: "source-0", raw: ref, sourceSequence: "0", signature, slot: "100", events: [event, { ...event, identity: { ...event.identity, instructionPath: [5, 4, 6] }, mint: "3".repeat(32) }] }] };
-  const path = join(directory, "case"); createCase(path, input, directory, join(root, ".aftershock/build"), "integration-test");
+  const path = join(directory, "case"); createCase(path, input, directory, join(root, ".aftershock/build"), "integration-test", mode);
   return { directory, path, input };
 }
 
@@ -69,4 +69,58 @@ test("tampered case, empty inputs and baseline failures remain separate from inj
     const baseline = await executeCase(preexisting, "faulty", false);
     assert.equal(baseline.verdict, "FAIL"); assert.deepEqual(baseline.appliedFaults, []); assert.deepEqual(baseline.configuredFaults, []);
   } finally { rmSync(t.directory, { recursive: true, force: true }); }
+});
+
+
+test("real post-commit kill preserves rows, exposes stale checkpoint and verifies atomic fix with overlap", { timeout: 180000 }, async () => {
+  const t = setup("crash");
+  try {
+    for (const variant of ["faulty", "fixed"] as const) {
+      const run = await executeCase(t.path, variant);
+      assert.equal(run.verdict, variant === "faulty" ? "FAIL" : "PASS", JSON.stringify(run));
+      assert.equal(run.resetVerified, true); assert.equal(run.cleanup, "removed");
+      assert.equal(run.initialStateDigest, digest(JSON.stringify({ schemaVersion: 1, events: [], totals: [], checkpoint: null }, null, 2) + "\n"));
+      assert.deepEqual(run.appliedFaults.map(f => f.status), ["applied"]);
+      const trace = JSON.parse(readFileSync(join(run.output, "recovery-trace.json"), "utf8"));
+      const kill = trace.find((e: any) => e.kind === "crash");
+      assert.equal(kill.termination, "SIGKILL"); assert.equal(kill.exitObserved, true);
+      assert.equal(kill.durableCheckpoint, variant === "faulty" ? null : "0");
+      assert.equal(kill.committedEventIds.length, 2); // Two events in one transaction commit together.
+      assert.equal(kill.barrier.eventIds.length, 2);
+      const snapshot = JSON.parse(readFileSync(join(run.output, "snapshot.json"), "utf8"));
+      const state = JSON.parse(readFileSync(join(run.output, snapshot.state.path), "utf8"));
+      assert.equal(state.events.length, 2); assert.equal(snapshot.checkpoint.lastDurableDelivery, "1");
+      if (variant === "faulty") {
+        sealFailure(t.path, run.discrepancies);
+        exportCase(t.path, join(t.directory, "crash-export"));
+        assert.equal(run.discrepancies.filter(d => d.field === "solLamports").length, 2);
+        assert.ok(run.discrepancies.every(d => d.kind === "total-field"));
+      }
+    }
+    const exported = join(t.directory, "crash-export");
+    for (const [variant, exit] of [["faulty", 1], ["fixed", 0]] as const) {
+      const result = spawnSync(process.execPath, [join(exported, "regression.mjs"), "test", exported, variant],
+        { cwd: exported, env: { PATH: "/usr/bin:/bin", LANG: "C" }, encoding: "utf8", timeout: 45000 });
+      assert.equal(result.status, exit, result.stdout + result.stderr);
+    }
+  } finally { rmSync(t.directory, { recursive: true, force: true }); }
+});
+
+test("reconnect overlap, recovered omission and permanent incompleteness have distinct outcomes", { timeout: 180000 }, async () => {
+  for (const mode of ["disconnect", "temporary-omission", "permanent-omission"] as const) {
+    const t = setup(mode);
+    try {
+      // Keep one other transaction so permanent withholding can still drain the delivered work.
+      if (mode === "permanent-omission") {
+        const input = structuredClone(t.input);
+        input.deliveries.push({ ...input.deliveries[0]!, inputId: "source-1", sourceSequence: "1", signature: "2".repeat(64), events: input.deliveries[0]!.events.map(e => ({ ...e, identity: { ...e.identity, signature: "2".repeat(64) } })) });
+        rmSync(t.path, { recursive: true }); createCase(t.path, input, t.directory, join(root, ".aftershock/build"), "integration-test", mode);
+      }
+      const run = await executeCase(t.path, "fixed");
+      assert.equal(run.verdict, mode === "permanent-omission" ? "INCONCLUSIVE" : "PASS", JSON.stringify(run));
+      assert.deepEqual(run.appliedFaults.map(f => f.status), ["applied"]);
+      assert.equal(run.cleanup, "removed");
+      if (mode === "permanent-omission") assert.ok(run.discrepancies.some(d => d.kind === "missing-event"));
+    } finally { rmSync(t.directory, { recursive: true, force: true }); }
+  }
 });

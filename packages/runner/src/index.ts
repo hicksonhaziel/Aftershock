@@ -3,7 +3,7 @@ import type { ChildProcessWithoutNullStreams } from "node:child_process";
 import { readFileSync, realpathSync, statSync } from "node:fs";
 import { resolve, sep } from "node:path";
 import { createHash } from "node:crypto";
-import { adapterRequestSchema, adapterResponseSchema, artifactRefSchema } from "@aftershock/contracts";
+import { adapterRequestSchema, adapterResponseSchema, artifactRefSchema, barrierSchema } from "@aftershock/contracts";
 import type { AdapterDescription } from "@aftershock/contracts";
 
 type Request = ReturnType<typeof adapterRequestSchema.parse>;
@@ -26,13 +26,22 @@ export function readArtifact(directory: string, value: Ref, maxBytes = 16 * 1024
   return bytes;
 }
 
-/** One trusted executable, one run, serialized JSON-RPC. No crash/barrier support yet. */
+type Barrier = ReturnType<typeof barrierSchema.parse>["params"];
+export class ObservedCrash extends Error { constructor(readonly barrier: Barrier) { super("Observed process crash."); } }
+/** One trusted executable and serialized deliveries with observed commit barriers. */
 export class AdapterSupervisor {
   private child: ChildProcessWithoutNullStreams;
   private state: "new" | "started" | "drained" | "stopped" | "closed" = "new";
   private failure: Error | undefined;
   private description: AdapterDescription | undefined;
   private nextId = 0;
+  private activeDelivery: { sequence: string; eventIds: string[]; crash: boolean } | undefined;
+  private releaseId: string | undefined;
+  private seenBarriers = new Set<string>();
+  readonly barriers: Barrier[] = [];
+  get observedOutputBytes() { return this.outputBytes; }
+  private expectedKill = false;
+  private killedBySignal = false;
   private lastSequence: bigint | undefined;
   private deliveries = new Set<string>();
   private buffer = Buffer.alloc(0);
@@ -52,8 +61,9 @@ export class AdapterSupervisor {
     this.child = spawn("/usr/bin/unshare", ["--user", "--map-root-user", "--net", options.executable, ...options.args], {
       cwd: options.directory, env: { PATH: "/usr/bin:/bin", LANG: "C" }, stdio: ["pipe", "pipe", "pipe"], detached: true,
     });
-    this.exitPromise = new Promise(resolveExit => this.child.once("close", () => {
-      if (this.state !== "closed") this.fail("Adapter exited before supervisor disposal.");
+    this.exitPromise = new Promise(resolveExit => this.child.once("close", (_code, signal) => {
+      this.killedBySignal = signal === "SIGKILL";
+      if (this.state !== "closed" && !this.expectedKill) this.fail("Adapter exited before supervisor disposal.");
       resolveExit();
     }));
     this.child.on("error", () => this.fail("Adapter process could not start."));
@@ -86,9 +96,32 @@ export class AdapterSupervisor {
       if (newline > 1024 * 1024) { this.fail("Adapter line limit exceeded."); return; }
       const line = this.buffer.subarray(0, newline); this.buffer = this.buffer.subarray(newline + 1);
       try {
-        const response = adapterResponseSchema.parse(JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(line)));
+        const value = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(line));
+        if (value.method === "barrier") {
+          const barrier = barrierSchema.parse(value).params, active = this.activeDelivery;
+          if (!active || !this.pending || this.releaseId || this.seenBarriers.has(barrier.barrierId)
+            || !this.description?.supportsFaultBarriers.includes(barrier.boundary)
+            || barrier.runId !== this.options.runId || barrier.committedThrough !== active.sequence
+            || JSON.stringify([...barrier.eventIds].sort()) !== JSON.stringify([...active.eventIds].sort())
+            || !barrier.checkpoint.supported || (barrier.checkpoint.lastDurableDelivery !== null && BigInt(barrier.checkpoint.lastDurableDelivery) > BigInt(active.sequence))) throw new Error();
+          this.seenBarriers.add(barrier.barrierId); this.barriers.push(barrier);
+          if (active.crash) {
+            const pending = this.pending; this.pending = undefined; clearTimeout(pending.timer);
+            this.expectedKill = true; this.state = "closed"; clearTimeout(this.lifetime); this.kill();
+            void this.exitPromise.then(() => pending.reject(this.killedBySignal ? new ObservedCrash(barrier) : new RunnerError("Crash termination was not observed.")));
+          } else {
+            this.releaseId = `release-${++this.nextId}`;
+            this.child.stdin.write(JSON.stringify({ jsonrpc: "2.0", id: this.releaseId, method: "releaseBarrier", params: { protocolVersion: 1, runId: this.options.runId, barrierId: barrier.barrierId } }) + "\n");
+          }
+          continue;
+        }
+        const response = adapterResponseSchema.parse(value);
+        if (this.releaseId && response.id === this.releaseId) {
+          if (!("result" in response) || response.result.kind !== "lifecycle" || response.result.state !== "released" || response.result.runId !== this.options.runId) throw new Error();
+          this.releaseId = undefined; continue;
+        }
         const pending = this.pending;
-        if (!pending || response.id !== pending.id) throw new Error();
+        if (!pending || this.releaseId || response.id !== pending.id) throw new Error();
         clearTimeout(pending.timer); this.pending = undefined;
         if ("error" in response) pending.reject(new AdapterError(response.error.verdict));
         else pending.resolve(response.result);
@@ -111,6 +144,7 @@ export class AdapterSupervisor {
       if ("runId" in result && result.runId !== this.options.runId) throw new RunnerError("Adapter responded for another run.");
       return result;
     } catch (error) {
+      if (error instanceof ObservedCrash) throw error;
       this.fail("Adapter request failed.");
       throw error;
     }
@@ -132,13 +166,23 @@ export class AdapterSupervisor {
     const result = await this.request("start", { runId: this.options.runId, initialState });
     this.require(result.kind === "lifecycle" && result.state === "started"); this.state = "started";
   }
-  async deliver(deliveryId: string, sequence: string, input: Ref) {
+  async resume(throughSequence: string) {
+    this.require(this.state === "new" && !!this.description);
+    const result = await this.request("resume", { runId: this.options.runId, throughSequence });
+    this.require(result.kind === "lifecycle" && result.state === "started");
+    this.lastSequence = BigInt(throughSequence); this.state = "started";
+  }
+  async deliver(deliveryId: string, sequence: string, input: Ref, barrier?: { eventIds: string[]; crash: boolean }) {
     this.require((this.state === "started" || this.state === "drained") && !this.deliveries.has(deliveryId)
       && /^(0|[1-9][0-9]*)$/.test(sequence) && (this.lastSequence === undefined || BigInt(sequence) === this.lastSequence + 1n)
       && this.deliveries.size < 10000);
     readArtifact(this.options.directory, input);
+    if (barrier?.crash && !this.description!.supportsFaultBarriers.includes("afterDurableEffectCommit")) throw new AdapterError("UNSUPPORTED");
+    this.activeDelivery = barrier ? { sequence, ...barrier } : undefined;
     const result = await this.request("deliver", { runId: this.options.runId, deliveryId, sequence, input });
     this.require(result.kind === "ack" && result.deliveryId === deliveryId && result.acknowledgement === this.description!.acknowledgement);
+    this.activeDelivery = undefined;
+    if (barrier?.crash) throw new AdapterError("INCONCLUSIVE");
     this.deliveries.add(deliveryId); this.lastSequence = BigInt(sequence); this.state = "started";
   }
   async drain() {

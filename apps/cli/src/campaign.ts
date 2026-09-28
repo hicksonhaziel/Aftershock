@@ -1,10 +1,12 @@
-import { readFileSync, mkdirSync } from "node:fs";
+import { readFileSync, mkdirSync, existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 import { pathToFileURL } from "node:url";
 import { projectedTradeSchema, sourceTransactionSchema, regressionInputSchema, captureManifestSchema } from "@aftershock/contracts";
 import { createCase, executeCase, sealFailure, exportCase, writeArtifact, digest } from "../../../packages/runner/src/regression.js";
 import { readArtifact, AdapterError } from "@aftershock/runner";
+import { inspectReference } from "../../../packages/runner/src/reference-evidence.js";
+import { compareTradeState } from "@aftershock/projection";
 const root = resolve(import.meta.dirname, "../../..");
 export function readNormalized(directory: string) {
   const bytes = readFileSync(join(directory, "normalization.json"));
@@ -29,11 +31,15 @@ export function readNormalized(directory: string) {
       sourceSequence: String(s.sourceSequence), slot: s.slot, signature: s.signature,
       events: events.filter((e: ReturnType<typeof projectedTradeSchema.parse>) => e.identity.signature === s.signature) })) });
 }
-export async function campaign(normalized: string, seed = "phase1") {
+export async function campaign(normalized: string, seed = "phase1", mode: "duplicate" | "crash" = "duplicate", referenceDirectory?: string) {
   const input = readNormalized(normalized), campaignRoot = join(root, ".aftershock", "campaigns", randomUUID());
   mkdirSync(campaignRoot, { recursive: true, mode: 0o700 });
+  const reference = referenceDirectory && input.parent
+    ? await inspectReference(referenceDirectory, JSON.parse(readArtifact(normalized, input.parent.manifest).toString()), input.parent.manifest.sha256)
+    : { checkType: "reference", verdict: "INCONCLUSIVE", coverage: "not-assessed", scope: "No finalized reference supplied; does not block saved-input application checks" };
+  writeArtifact(campaignRoot, "reference-lane.json", reference);
   const directory = join(campaignRoot, "case");
-  createCase(directory, input, normalized, join(root, ".aftershock/build"), seed);
+  createCase(directory, input, normalized, join(root, ".aftershock/build"), seed, mode);
   const baseline = await executeCase(directory, "faulty", false);
   if (baseline.verdict !== "PASS") { writeArtifact(campaignRoot, "campaign.json", { stage: "baseline", verdict: baseline.verdict, baseline }); return { campaignRoot, verdict: baseline.verdict }; }
   const faulty = await executeCase(directory, "faulty");
@@ -52,14 +58,26 @@ export async function campaign(normalized: string, seed = "phase1") {
   const verdict = fixedBaseline.verdict === "PASS" && fixed.verdict === "PASS" ? "PASS" : fixed.verdict === "PASS" ? fixedBaseline.verdict : fixed.verdict;
   let exported: string | null = null;
   if (verdict === "PASS") exported = exportCase(directory, join(campaignRoot, "export"));
-  writeArtifact(campaignRoot, "campaign.json", { schemaVersion: 1, stage: "comparison", verdict,
+  const state = (run: { output: string }) => {
+    const snapshot = JSON.parse(readFileSync(join(run.output, "snapshot.json"), "utf8"));
+    return JSON.parse(readArtifact(run.output, snapshot.state).toString());
+  };
+  const metamorphic = [ [baseline, faulty], [fixedBaseline, fixed] ].map(([clean, changed]) => ({
+    checkType: "metamorphic", variant: changed!.variant, cleanRunId: clean!.runId, faultedRunId: changed!.runId,
+    ...(["PASS", "FAIL"].includes(changed!.verdict) && existsSync(join(changed!.output, "snapshot.json"))
+      ? compareTradeState(state(clean!).events, state(changed!))
+      : { verdict: changed!.verdict, summary: "Faulted execution did not establish a complete comparison." }) }));
+  writeArtifact(campaignRoot, "checking-lanes.json", { reference, metamorphic,
+    application: [baseline, faulty, fixedBaseline, fixed].map(r => ({ checkType: "application", runId: r.runId, variant: r.variant, faulted: r.faulted, verdict: r.verdict })) });
+  writeArtifact(campaignRoot, "campaign.json", { schemaVersion: 1, stage: "comparison", verdict, reference, metamorphic,
     meaning: "Intentional sample defect detected and fixed sample passed; not an external consumer defect", baseline, faulty, fixedBaseline, fixed, exported });
   return { campaignRoot, verdict, exported };
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   try {
-    if (!process.argv[2] || process.argv.length > 4) throw new Error();
-    const result = await campaign(resolve(process.argv[2]), process.argv[3] ?? "phase1");
+    if (!process.argv[2] || process.argv.length > 6) throw new Error();
+    if (process.argv[4] && !["duplicate", "crash"].includes(process.argv[4])) throw new Error();
+    const result = await campaign(resolve(process.argv[2]), process.argv[3] ?? "phase1", process.argv[4] as "duplicate" | "crash" | undefined, process.argv[5] ? resolve(process.argv[5]) : undefined);
     console.log(`Campaign: ${result.verdict}\nEvidence: ${result.campaignRoot}\nExport: ${result.exported ?? "not-created"}`);
     process.exitCode = result.verdict === "PASS" ? 0 : result.verdict === "FAIL" ? 1 : result.verdict === "RUNNER_ERROR" ? 2 : 3;
   } catch (error) { console.error("Campaign setup failed; verify normalized capture, build artifacts and local offline dependencies."); process.exitCode = error instanceof AdapterError ? 3 : 2; }

@@ -1,3 +1,4 @@
+import { realpathSync, statSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 export const POSTGRES_IMAGE = "postgres:15-alpine@sha256:1c52f5ad23db5d7648a63634444af76de48e63b860fccbe3e3a5458b2812eaed";
 export const sqlString = (value: string) => "'" + value.replaceAll("'", "''") + "'";
@@ -17,14 +18,16 @@ export function verifyContainer(container: string, token: string) {
   const observed = docker(["inspect", "--format", '{{index .Config.Labels "dev.aftershock.token"}}:{{.HostConfig.NetworkMode}}', container]);
   if (observed !== `${token}:none`) throw new Error("Container ownership or network mismatch.");
 }
-export async function createDatabase(token: string, runId: string, migration: string) {
+export async function createDatabase(token: string, runId: string, migration: string, socketDirectory?: string) {
   if (!/^[a-f0-9-]{36}$/.test(token)) throw new Error("Invalid ownership token.");
+  if (socketDirectory && (!/^\/tmp\/aftershock-external-[A-Za-z0-9]+\/socket$/.test(socketDirectory)
+    || realpathSync(socketDirectory) !== socketDirectory || !statSync(socketDirectory).isDirectory())) throw new Error("Invalid external socket directory.");
   const container = `aftershock-case-${token.replaceAll("-", "")}`;
   docker(["image", "inspect", POSTGRES_IMAGE]); // Never pull or use a mutable tag during a run.
   try {
     docker(["run", "--detach", "--pull", "never", "--name", container, "--network", "none", "--read-only",
     "--memory", "256m", "--cpus", "1", "--pids-limit", "128",
-    "--tmpfs", "/var/lib/postgresql/data:rw,size=134217728", "--tmpfs", "/var/run/postgresql:rw,size=16777216", "--tmpfs", "/tmp:rw,size=16777216",
+    "--tmpfs", "/var/lib/postgresql/data:rw,size=134217728", ...(socketDirectory ? ["--mount", `type=bind,src=${socketDirectory},dst=/var/run/postgresql`] : ["--tmpfs", "/var/run/postgresql:rw,size=16777216"]), "--tmpfs", "/tmp:rw,size=16777216",
     "--label", `dev.aftershock.token=${token}`, "--env", "POSTGRES_USER=aftershock", "--env", "POSTGRES_DB=aftershock_run",
     "--env", "POSTGRES_HOST_AUTH_METHOD=trust", POSTGRES_IMAGE], undefined, 20000);
     verifyContainer(container, token);

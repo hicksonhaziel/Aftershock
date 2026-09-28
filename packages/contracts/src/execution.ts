@@ -25,6 +25,8 @@ export const tradeEventSchema = z.strictObject({
   provenance: artifactRefSchema,
 });
 export const faultSchema = z.discriminatedUnion("kind", [
+  z.strictObject({ faultId: id, kind: z.literal("disconnect"), deliveryId: id, overlap: z.literal(1) }),
+  z.strictObject({ faultId: id, kind: z.literal("omission"), deliveryId: id, recover: z.boolean() }),
   z.strictObject({ faultId: id, kind: z.literal("duplicate"), deliveryId: id, additionalDeliveries: z.number().int().min(1).max(10) }),
   z.strictObject({ faultId: id, kind: z.literal("crash"), boundary: z.literal("afterDurableEffectCommit"), anchorEventId: id, occurrence: z.number().int().min(1).max(1000) }),
 ]);
@@ -82,6 +84,7 @@ const runParams = z.strictObject({ protocolVersion: version, runId: id });
 export const adapterRequestSchema = z.discriminatedUnion("method", [
   request("describe", z.strictObject({ protocolVersion: version })),
   request("start", z.strictObject({ protocolVersion: version, runId: id, initialState: artifactRefSchema })),
+  request("resume", z.strictObject({ protocolVersion: version, runId: id, throughSequence: unsignedInteger })),
   request("deliver", z.strictObject({ protocolVersion: version, runId: id, deliveryId: id, sequence: unsignedInteger, input: artifactRefSchema })),
   request("drain", z.strictObject({ protocolVersion: version, runId: id, throughSequence: unsignedInteger })),
   request("snapshot", runParams), request("checkpoint", runParams), request("stop", runParams),

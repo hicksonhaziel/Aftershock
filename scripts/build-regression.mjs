@@ -18,7 +18,7 @@ for (const [from, name] of [[join(root, 'LICENSE'), 'LICENSE'], [join(dirname(re
   writeFileSync(join(output, name), readFileSync(from)); files.push(ref(name));
 }
 const sources = execFileSync('git', ['ls-files', '--cached', '--others', '--exclude-standard'], { cwd: root, encoding: 'utf8' }).trim().split('\n')
-  .filter(p => /^(packages\/(contracts|projection|runner)\/src\/.*\.ts|examples\/trade-ledger\/src\/.*\.ts|migrations\/.*\.sql|pnpm-lock.yaml|scripts\/build-regression.mjs)$/.test(p));
+  .filter(p => /^(packages\/(contracts|projection|runner|reference)\/src\/.*\.ts|examples\/trade-ledger\/src\/.*\.ts|migrations\/.*\.sql|pnpm-lock.yaml|scripts\/build-regression.mjs)$/.test(p));
 const sourceFiles = [];
 for (const path of [...new Set(sources)].sort()) {
   const destination = 'source/' + path; mkdirSync(dirname(join(output, destination)), { recursive: true });

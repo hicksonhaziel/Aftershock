@@ -5,14 +5,14 @@ import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createHash, randomUUID } from "node:crypto";
-import { AdapterSupervisor, readArtifact } from "../src/index.js";
+import { AdapterSupervisor, readArtifact, ObservedCrash } from "../src/index.js";
 
 const fixture = `
 import readline from 'node:readline';
 import net from 'node:net';
 const mode = process.argv[2];
-let runId, initial, last;
-const checkpoint = () => ({schemaVersion:1,runId,supported:false,lastDurableDelivery:null,consumerValue:null});
+let runId, initial, last, held;
+const checkpoint = () => ({schemaVersion:1,runId,supported:mode.startsWith('barrier'),lastDurableDelivery:null,consumerValue:null});
 readline.createInterface({input:process.stdin}).on('line', line => {
  const req=JSON.parse(line), p=req.params;
  if(mode==='timeout') return;
@@ -20,9 +20,17 @@ readline.createInterface({input:process.stdin}).on('line', line => {
  if(mode==='flood') { process.stdout.write('x'.repeat(2048)); return; }
  let result;
  switch(req.method) {
- case 'describe': result={kind:'description',description:{schemaVersion:1,adapterVersion:'synthetic-test',projectionContract:'pumpfun-trades-v1',acknowledgement:'processed',supportsCheckpoints:false,supportsFaultBarriers:[],deterministicDependencies:[],executionControl:{controlledBoundaries:[],uncontrolledDependencies:[]}}}; break;
+ case 'describe': result={kind:'description',description:{schemaVersion:1,adapterVersion:'synthetic-test',projectionContract:'pumpfun-trades-v1',acknowledgement:'processed',supportsCheckpoints:mode.startsWith('barrier'),supportsFaultBarriers:mode.startsWith('barrier')?['afterDurableEffectCommit']:[],deterministicDependencies:[],executionControl:{controlledBoundaries:[],uncontrolledDependencies:[]}}}; break;
  case 'start': runId=p.runId;initial=p.initialState;result={kind:'lifecycle',runId,state:'started'};break;
- case 'deliver': last=p.sequence;result={kind:'ack',runId,deliveryId:p.deliveryId,acknowledgement:mode==='wrong-ack'?'durable-commit':'processed'};break;
+ case 'releaseBarrier':
+ process.stdout.write(JSON.stringify({jsonrpc:'2.0',id:req.id,result:{kind:'lifecycle',runId,state:'released'}})+'\\n');
+ process.stdout.write(JSON.stringify({jsonrpc:'2.0',id:held.id,result:{kind:'ack',runId,deliveryId:held.params.deliveryId,acknowledgement:'processed'}})+'\\n');return;
+ case 'deliver':
+ if(mode.startsWith('barrier') && mode!=='barrier-silent') {
+  held=req;
+  process.stdout.write(JSON.stringify({jsonrpc:'2.0',method:'barrier',params:{protocolVersion:1,runId:mode==='barrier-wrong-run'?'other':runId,barrierId:'barrier-1',boundary:'afterDurableEffectCommit',eventIds:[mode==='barrier-wrong-event'?'other':'event-1'],committedThrough:mode==='barrier-wrong-sequence'?'99':p.sequence,checkpoint:checkpoint()}})+'\\n');return;
+ }
+ last=p.sequence;result={kind:'ack',runId,deliveryId:p.deliveryId,acknowledgement:mode==='wrong-ack'?'durable-commit':'processed'};break;
  case 'drain': result={kind:'drained',runId,throughSequence:mode==='wrong-drain'?'999':last,pending:0,writeErrors:mode==='write-error'?1:0,skipped:0,deadLetters:0};break;
  case 'snapshot': result={kind:'snapshot',snapshot:{schemaVersion:1,runId:mode==='wrong-run'?'other':runId,projectionVersion:'pumpfun-trades-v1',drainedThrough:last,state:initial,checkpoint:mode==='wrong-run'?{...checkpoint(),runId:'other'}:checkpoint(),excludedFields:[]}};break;
  case 'checkpoint': result={kind:'checkpoint',checkpoint:checkpoint()};break;
@@ -124,5 +132,44 @@ test("reset refuses a token not owned by this run", async () => {
   try {
     await t.runner.describe(); await t.runner.start(t.ref); await t.runner.stop();
     await assert.rejects(t.runner.reset(randomUUID()));
+  } finally { await t.cleanup(); }
+});
+
+
+test("commit barriers are correlated and supervisor observes an actual SIGKILL", async () => {
+  for (const mode of ["barrier", "barrier-wrong-run", "barrier-wrong-event", "barrier-wrong-sequence"]) {
+    const t = setup(mode);
+    try {
+      await t.runner.describe(); await t.runner.start(t.ref);
+      const delivery = t.runner.deliver("d-0", "0", t.ref, { eventIds: ["event-1"], crash: true });
+      if (mode === "barrier") await assert.rejects(delivery, error => error instanceof ObservedCrash && error.barrier.committedThrough === "0");
+      else await assert.rejects(delivery, /Malformed/);
+    } finally { await t.cleanup(); }
+  }
+});
+test("nonselected barrier is released before delivery acknowledgement", async () => {
+  const t = setup("barrier");
+  try {
+    await t.runner.describe(); await t.runner.start(t.ref);
+    await t.runner.deliver("d-0", "0", t.ref, { eventIds: ["event-1"], crash: false });
+    assert.equal(t.runner.barriers.length, 1);
+  } finally { await t.cleanup(); }
+});
+
+
+test("a missing declared crash hook cannot pass as a delivered fault", async () => {
+  const t = setup();
+  try {
+    await t.runner.describe(); await t.runner.start(t.ref);
+    await assert.rejects(t.runner.deliver("d-0", "0", t.ref, { eventIds: ["event-1"], crash: true }), /UNSUPPORTED/);
+  } finally { await t.cleanup(); }
+});
+
+
+test("a declared hook that never fires remains inconclusive", async () => {
+  const t = setup("barrier-silent");
+  try {
+    await t.runner.describe(); await t.runner.start(t.ref);
+    await assert.rejects(t.runner.deliver("d-0", "0", t.ref, { eventIds: ["event-1"], crash: true }), /INCONCLUSIVE/);
   } finally { await t.cleanup(); }
 });

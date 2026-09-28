@@ -4,10 +4,10 @@ import { createHash, randomUUID } from "node:crypto";
 import { isDeepStrictEqual } from "node:util";
 import { regressionCaseSchema, regressionInputSchema, regressionLockSchema, emptyTradeStateSchema, exportManifestSchema, assertionSchema, scenarioSchema, runSchema, incidentSchema, captureManifestSchema } from "@aftershock/contracts";
 import type { RegressionCase, RegressionInput, RegressionLock, AdapterDescription } from "@aftershock/contracts";
-import { compareTradeState, expectedTradeState } from "@aftershock/projection";
+import { compareTradeState, expectedTradeState, eventId } from "@aftershock/projection";
 import type { Discrepancy } from "@aftershock/projection";
-import { AdapterSupervisor, readArtifact, AdapterError } from "./index.js";
-import { createDatabase, removeDatabase, POSTGRES_IMAGE } from "./postgres.js";
+import { AdapterSupervisor, readArtifact, AdapterError, ObservedCrash } from "./index.js";
+import { createDatabase, removeDatabase, POSTGRES_IMAGE, sql } from "./postgres.js";
 export const digest = (data: string | Uint8Array) => createHash("sha256").update(data).digest("hex");
 export const json = (value: unknown) => JSON.stringify(value, null, 2) + "\n";
 export function writeArtifact(directory: string, path: string, value: unknown) {
@@ -20,8 +20,23 @@ export function schedule(input: RegressionInput, spec: RegressionCase, faulted: 
   const planned = input.deliveries.map(d => ({ inputId: d.inputId, faultId: null as string | null }));
   if (planned.length > spec.scenario.limits.deliveries) throw new Error("Delivery limit exceeded.");
   if (!faulted) return planned;
+  if (spec.scenario.faults.length > 1 && spec.scenario.faults.some(f => f.kind !== "duplicate")) throw new AdapterError("UNSUPPORTED");
   for (const fault of spec.scenario.faults) {
-    if (fault.kind !== "duplicate") throw new AdapterError("UNSUPPORTED");
+    if (fault.kind === "disconnect" || fault.kind === "omission") {
+      const index = planned.findIndex(d => d.inputId === fault.deliveryId);
+      if (index < 0) throw new AdapterError("INCONCLUSIVE");
+      if (fault.kind === "disconnect") planned.splice(index + 1, 0, { inputId: fault.deliveryId, faultId: fault.faultId });
+      else { const [removed] = planned.splice(index, 1); if (fault.recover) planned.push({ ...removed!, faultId: fault.faultId }); }
+      continue;
+    }
+    if (fault.kind === "crash") {
+      if (spec.scenario.faults.length !== 1 || fault.occurrence !== 1) throw new AdapterError("UNSUPPORTED");
+      const anchor = input.deliveries.find(d => d.events.some(e => eventId(e) === fault.anchorEventId));
+      if (!anchor) throw new AdapterError("INCONCLUSIVE");
+      const index = planned.findIndex(d => d.inputId === anchor.inputId);
+      planned.splice(index + 1, 0, { inputId: anchor.inputId, faultId: fault.faultId });
+      continue;
+    }
     const index = planned.findIndex(d => d.inputId === fault.deliveryId && d.faultId === null);
     if (index < 0) throw new AdapterError("INCONCLUSIVE");
     planned.splice(index + 1, 0, ...Array.from({ length: fault.additionalDeliveries }, () => ({ inputId: fault.deliveryId, faultId: fault.faultId })));
@@ -87,6 +102,9 @@ export async function executeCase(directory: string, variant: "faulty" | "fixed"
   let description: AdapterDescription | undefined;
   let loaded: ReturnType<typeof loadCase> | undefined;
   const applied: { faultId: string; status: "applied" | "not-triggered" | "unsupported"; evidence: { path: string; sha256: string }[] }[] = [];
+  const recovery: unknown[] = [];
+  let crashApplied = false, disconnectApplied = false;
+  let initialStateDigest: string | undefined;
   let resetVerified = false, cleanup = "not-created-or-setup-cleaned";
   let snapshotRef: { path: string; sha256: string } | undefined;
   try {
@@ -94,6 +112,10 @@ export async function executeCase(directory: string, variant: "faulty" | "fixed"
     if (variant !== "faulty" && variant !== "fixed") throw new AdapterError("UNSUPPORTED");
     const { input, spec } = loaded;
     const plan = schedule(input, spec, faulted);
+    if (!plan.length) {
+      for (const fault of spec.scenario.faults) if (faulted && fault.kind === "omission") recovery.push({ kind: "omission", faultId: fault.faultId, inputId: fault.deliveryId, recover: fault.recover });
+      throw new AdapterError("INCONCLUSIVE");
+    }
     if (!input.deliveries.some(d => d.events.length)) throw new AdapterError("INCONCLUSIVE");
     for (const ref of loaded.lock.files) {
       mkdirSync(resolve(output, ref.path, ".."), { recursive: true, mode: 0o700 });
@@ -105,19 +127,58 @@ export async function executeCase(directory: string, variant: "faulty" | "fixed"
     container = await createDatabase(token, runId, readFileSync(join(directory, "schema.sql"), "utf8"));
     if (cancelled) throw new AdapterError("INCONCLUSIVE");
     const configPath = join(output, "sample-config.json");
-    writeFileSync(configPath, json({ container, token, runId, variant }), { mode: 0o600, flag: "wx" });
-    supervisor = new AdapterSupervisor({ executable: process.execPath, args: [resolve(directory, "adapter.mjs"), configPath],
+    writeFileSync(configPath, json({ container, token, runId, variant, barriers: true }), { mode: 0o600, flag: "wx" });
+    const deadline = Date.now() + spec.scenario.limits.durationSeconds * 1000;
+    let previousOutputBytes = 0;
+    const launch = () => new AdapterSupervisor({ executable: process.execPath, args: [resolve(directory, "adapter.mjs"), configPath],
       directory: output, runId, ownershipToken: token, network: "disabled", requestTimeoutMs: 15000,
-      durationMs: spec.scenario.limits.durationSeconds * 1000, maxOutputBytes: spec.scenario.limits.outputBytes });
-    description = await supervisor.describe();
-    if (description.projectionContract !== input.projectionVersion || description.acknowledgement !== "durable-commit") throw new AdapterError("UNSUPPORTED");
+      durationMs: Math.max(1, deadline - Date.now()), maxOutputBytes: spec.scenario.limits.outputBytes - previousOutputBytes });
+    supervisor = launch(); description = await supervisor.describe();
+    const disconnect = faulted ? spec.scenario.faults.find(f => f.kind === "disconnect") : undefined;
+    const omission = faulted ? spec.scenario.faults.find(f => f.kind === "omission") : undefined;
+    if (omission) recovery.push({ kind: "omission", faultId: omission.faultId, inputId: omission.deliveryId, recover: omission.recover });
+    const crash = faulted ? spec.scenario.faults.find(f => f.kind === "crash") : undefined;
+    if (description.projectionContract !== input.projectionVersion || description.acknowledgement !== "durable-commit"
+      || (crash && !description.supportsFaultBarriers.includes(crash.boundary))) throw new AdapterError("UNSUPPORTED");
     await supervisor.start(initial);
+    const initialCounts = sql(container, "SELECT (SELECT count(*) FROM consumer_events)::text || ':' || (SELECT count(*) FROM consumer_totals)::text || ':' || (SELECT count(*) FROM consumer_checkpoints)::text;");
+    if (initialCounts !== "0:0:0") throw new Error("Dirty initial state.");
+    initialStateDigest = digest(json({ schemaVersion: 1, events: [], totals: [], checkpoint: null }));
+    recovery.push({ kind: "initial-state", observedCounts: initialCounts, digest: initialStateDigest });
     for (const [i, delivery] of plan.entries()) {
       const entry = { sequence: String(i), deliveryId: `delivery-${i}`, ...delivery, status: "planned" as const };
       trace.push(entry);
-      await supervisor.deliver(entry.deliveryId, entry.sequence, refs.get(entry.inputId)!);
-      trace[i] = { ...entry, status: "durable-commit" };
+      const eventIds = [...new Set(input.deliveries.find(d => d.inputId === entry.inputId)!.events.map(eventId))];
+      const shouldCrash = !!crash && !crashApplied && eventIds.includes(crash.anchorEventId);
+      try {
+        await supervisor.deliver(entry.deliveryId, entry.sequence, refs.get(entry.inputId)!, { eventIds, crash: shouldCrash });
+        trace[i] = { ...entry, status: "durable-commit" };
+        if (disconnect && !disconnectApplied && entry.inputId === disconnect.deliveryId) {
+          await supervisor.drain(); const checkpoint = await supervisor.checkpoint();
+          recovery.push({ kind: "disconnect", faultId: disconnect.faultId, inputId: entry.inputId, checkpoint, barriers: supervisor.barriers });
+          await supervisor.stop(); previousOutputBytes += supervisor.observedOutputBytes; await supervisor.dispose(); supervisor = launch();
+          if (!isDeepStrictEqual(await supervisor.describe(), description)) throw new Error("Restart capability mismatch.");
+          await supervisor.resume(entry.sequence); disconnectApplied = true;
+          recovery.push({ kind: "restart", throughSequence: entry.sequence, policy: "explicit-one-input-overlap", nextInputId: plan[i + 1]?.inputId });
+        }
+      } catch (error) {
+        if (!(error instanceof ObservedCrash) || !shouldCrash) throw error;
+        const durableCheckpoint = sql(container, "SELECT last_delivery::text FROM consumer_checkpoints WHERE consumer_id='sample';") || null;
+        if (durableCheckpoint !== error.barrier.checkpoint.lastDurableDelivery) throw new Error("Barrier checkpoint differs from durable state.");
+        const committedEvents = JSON.parse(sql(container, "SELECT COALESCE(jsonb_agg(event_id),'[]'::jsonb) FROM consumer_events;")) as string[];
+        if (!eventIds.every(id => committedEvents.includes(id))) throw new Error("Barrier effects were not durable.");
+        recovery.push({ kind: "crash", faultId: crash!.faultId, inputId: entry.inputId, barrier: error.barrier,
+          termination: "SIGKILL", exitObserved: true, durableCheckpoint, committedEventIds: committedEvents, priorBarriers: supervisor.barriers });
+        trace[i] = { ...entry, status: "durable-commit" }; crashApplied = true;
+        previousOutputBytes += supervisor.observedOutputBytes; await supervisor.dispose(); supervisor = launch();
+        const restarted = await supervisor.describe();
+        if (!isDeepStrictEqual(restarted, description)) throw new Error("Restart capability mismatch.");
+        await supervisor.resume(entry.sequence);
+        recovery.push({ kind: "restart", throughSequence: entry.sequence, checkpoint: durableCheckpoint,
+          nextInputId: plan[i + 1]?.inputId, policy: "explicit-one-input-overlap-even-if-checkpoint-advanced" });
+      }
     }
+    recovery.push({ kind: "observed-commit-barriers", barriers: supervisor.barriers });
     await supervisor.drain(); const snapshot = await supervisor.snapshot(); await supervisor.checkpoint();
     snapshotRef = writeArtifact(output, "snapshot.json", snapshot);
     const comparison = compareTradeState(input.deliveries.flatMap(d => d.events), JSON.parse(readArtifact(output, snapshot.state).toString()));
@@ -133,15 +194,21 @@ export async function executeCase(directory: string, variant: "faulty" | "fixed"
   }
   process.removeListener("SIGINT", cancel); process.removeListener("SIGTERM", cancel);
   const traceRef = writeArtifact(output, "delivery-trace.json", trace);
+  const recoveryRef = writeArtifact(output, "recovery-trace.json", recovery);
   if (faulted && loaded) for (const fault of loaded.spec.scenario.faults) {
     const count = trace.filter(t => t.faultId === fault.faultId && t.status === "durable-commit").length;
-    applied.push({ faultId: fault.faultId, status: fault.kind !== "duplicate" ? "unsupported" : count === fault.additionalDeliveries ? "applied" : "not-triggered", evidence: count ? [traceRef] : [] });
+    applied.push({ faultId: fault.faultId, status: verdict === "UNSUPPORTED" ? "unsupported" : (fault.kind === "crash" ? crashApplied && count === 1 : fault.kind === "disconnect" ? disconnectApplied && count === 1
+        : fault.kind === "omission" ? recovery.some((r: any) => r.kind === "omission" && r.faultId === fault.faultId) && (!fault.recover || count === 1)
+        : count === fault.additionalDeliveries) ? "applied" : "not-triggered", evidence: [recoveryRef, traceRef] });
+  }
+  if (faulted && loaded?.spec.scenario.faults.some(f => f.kind === "omission" && !f.recover) && ["PASS", "FAIL"].includes(verdict)) {
+    verdict = "INCONCLUSIVE"; reason = "Declared input was permanently withheld; recovery correctness cannot be established.";
   }
   if (verdict === "PASS" && applied.some(f => f.status !== "applied")) verdict = "INCONCLUSIVE";
   const discrepancyRef = writeArtifact(output, "discrepancies.json", discrepancies);
   const summary = { schemaVersion: 1, runId, variant, faulted, verdict, ...(reason ? { reason } : {}),
     configuredFaults: faulted ? loaded?.spec.scenario.faults ?? [] : [], appliedFaults: applied, discrepancies,
-    cleanup, resetVerified, output };
+    cleanup, resetVerified, initialStateDigest, output };
   if (loaded && description) {
     const scenarioRef = writeArtifact(output, "scenario.json", faulted ? loaded.spec.scenario : { ...loaded.spec.scenario, faults: [] });
     const runtimeRef = writeArtifact(output, "runtime.json", loaded.lock);
@@ -149,7 +216,7 @@ export async function executeCase(directory: string, variant: "faulty" | "fixed"
       coverage: loaded.input.coverage.status, summary: reason ?? `Maintained ${variant} trade-state comparison.`, evidenceRefs: [discrepancyRef.path] };
     const run = runSchema.parse({ schemaVersion: 1, runId, scenario: scenarioRef, consumerRevision: loaded.lock.sourceRevision,
       adapter: description, runtime: runtimeRef, coverage: loaded.input.coverage, requiredFaultIds: faulted ? loaded.spec.scenario.faults.map(f => f.faultId) : [],
-      appliedFaults: applied, results: [result], verdict, evidence: [traceRef, discrepancyRef, ...(snapshotRef ? [snapshotRef] : [])] });
+      appliedFaults: applied, results: [result], verdict, evidence: [traceRef, recoveryRef, discrepancyRef, ...(snapshotRef ? [snapshotRef] : [])] });
     const runRef = writeArtifact(output, "run.json", run);
     if (verdict === "FAIL" && snapshotRef) {
       const expectedRef = loaded.files.get("expected.json")!;
@@ -162,7 +229,7 @@ export async function executeCase(directory: string, variant: "faulty" | "fixed"
 }
 
 /** Build an initial offline case from validated inputs. No executable path is accepted from its data. */
-export function createCase(directory: string, inputValue: unknown, rawRoot: string, buildRoot: string, seed: string) {
+export function createCase(directory: string, inputValue: unknown, rawRoot: string, buildRoot: string, seed: string, mode: "duplicate" | "crash" | "disconnect" | "temporary-omission" | "permanent-omission" = "duplicate") {
   const input = regressionInputSchema.parse(inputValue), candidates = input.deliveries.filter(d => d.events.length);
   if (!candidates.length) throw new AdapterError("INCONCLUSIVE");
   mkdirSync(directory, { recursive: false, mode: 0o700 });
@@ -180,9 +247,13 @@ export function createCase(directory: string, inputValue: unknown, rawRoot: stri
   }
   const inputRef = writeArtifact(directory, "input.json", input), initialRef = writeArtifact(directory, "initial-state.json", { schemaVersion: 1, events: [], totals: [], checkpoint: null });
   const expectedRef = writeArtifact(directory, "expected.json", expectedTradeState(input.deliveries.flatMap(d => d.events)));
-  const anchor = candidates[Number(BigInt("0x" + digest(seed).slice(0, 12)) % BigInt(candidates.length))]!;
-  const scenario = scenarioSchema.parse({ schemaVersion: 1, scenarioId: "seeded-duplicate-v1", input: inputRef, initialState: initialRef, order: "recorded",
-    faults: [{ faultId: "duplicate-1", kind: "duplicate", deliveryId: anchor.inputId, additionalDeliveries: 1 }],
+  const eligible = mode === "temporary-omission" && candidates.length > 1 ? candidates.slice(0, -1) : candidates;
+  const anchor = eligible[Number(BigInt("0x" + digest(seed).slice(0, 12)) % BigInt(eligible.length))]!;
+  const scenario = scenarioSchema.parse({ schemaVersion: 1, scenarioId: `seeded-${mode}-v1`, input: inputRef, initialState: initialRef, order: "recorded",
+    faults: mode === "duplicate" ? [{ faultId: "duplicate-1", kind: "duplicate", deliveryId: anchor.inputId, additionalDeliveries: 1 }]
+      : mode === "crash" ? [{ faultId: "crash-1", kind: "crash", boundary: "afterDurableEffectCommit", anchorEventId: eventId(anchor.events[0]!), occurrence: 1 }]
+      : mode === "disconnect" ? [{ faultId: "disconnect-1", kind: "disconnect", deliveryId: anchor.inputId, overlap: 1 }]
+      : [{ faultId: "omission-1", kind: "omission", deliveryId: anchor.inputId, recover: mode === "temporary-omission" }],
     limits: { durationSeconds: 120, deliveries: 2000, outputBytes: 16 * 1024 * 1024 } });
   const spec = regressionCaseSchema.parse({ schemaVersion: 1, caseId: randomUUID(), seed, input: inputRef, initialState: initialRef, scenario,
     assertion: "trade-state-equality-v1", requiresNonemptyEvents: true, expectedFailure: [] });

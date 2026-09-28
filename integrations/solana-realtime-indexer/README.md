@@ -89,3 +89,9 @@ To reproduce the external check, obtain the exact revision in `upstream.json`, v
 `trade-audit.patch` adds an opt-in observation beside the ordinary Pump.fun processor's event handling. It emits signature/path/ordinal, slot, mint, trader, direction and integer amounts as strings. It does not replace the decoder or modify database writes. Apply it with `git apply --unidiff-zero trade-audit.patch` alongside `event-audit.patch` to the pinned revision; `trade-decoder-lock.json` records the verified compiler, binary and patch hashes. The new observation is enabled only with `AFTERSHOCK_TRADE_AUDIT=1`.
 
 The capture normalizer runs that build with networking disabled and without a database. It matches every emitted event to a verified source transaction and checks replay completion/counts. See [Phase 1 progress](../../docs/phase-1-progress.md) for the command, observed saved-capture result and limits. This begins external process integration; the external persistence adapter/campaign remains unimplemented.
+
+## Phase 2 durable-state controls
+
+The [state adapter](state-adapter.ts) now verifies disposable resource ownership, inspects persisted events/trades/checkpoints, resets the pinned schema, and reports explicit overlap recovery capabilities. `state-lock.json` pins every upstream migration. `pnpm external:state-check <normalized-directory> <pinned-source-directory>` runs ordinary finite replay in two separate processes with the same owned database, checks stored state across full overlap, and verifies reset. IP networking is disabled; a temporary Unix socket connects only to the new disposable PostgreSQL instance. See the [workflow and limitations](../../docs/phase-2-workflow.md).
+
+Precise external commit barriers remain unsupported. This is a bounded state-control/restart check, not the completed general external process adapter. Existing decoder observation patches remain unchanged; no external business defect is claimed.

@@ -1,6 +1,6 @@
 # Adapter protocol 1 and artifact contracts
 
-Phase 0 defines and validates interfaces; it does not implement the process supervisor, fault runner or reducer. Executable schemas are in `packages/contracts/src/execution.ts`, with accepted and rejected examples in its tests. Capture/reference schemas remain separate from consumer execution.
+The process supervisor, maintained sample lifecycle and post-commit crash/recovery runner now implement these interfaces. Reduction remains later work. Executable schemas are in `packages/contracts/src/execution.ts`, with accepted and rejected examples in its tests. Capture/reference schemas remain separate from consumer execution.
 
 ## Initial data contract
 
@@ -18,6 +18,7 @@ Use one child process per consumer run, JSON-RPC 2.0 over newline-delimited UTF-
 | --- | --- | --- |
 | `describe` | Any nonterminated state | Declared projection, ack semantics, boundaries and uncontrolled dependencies |
 | `start` | New/reset | Bind one run and its owned initial state; return `started` |
+| `resume` | New process on retained owned state | Bind the run and continue runner delivery sequence; actual checkpoint remains separately observed |
 | `deliver` | Started/drained | Feed bounded referenced input; return receipt/processed/durable ack exactly as declared; invalidate drained state |
 | `drain` | Started | Stop accepting deliveries; wait for all work through requested sequence and successful writer flush |
 | `snapshot`, `checkpoint` | Drained | Committed state and explicit watermark/support status; never a queue position passed off as durability |
@@ -25,7 +26,7 @@ Use one child process per consumer run, JSON-RPC 2.0 over newline-delimited UTF-
 | `stop` | Started/drained/paused | Graceful stop; not a crash; a stopped process accepts no new delivery |
 | `reset` | Stopped | Verify run ownership token, reset only its disposable state, return `reset` |
 
-Lifecycle ordering, sequence monotonicity, artifact hash verification and response-ID correlation are supervisor responsibilities in Phase 1. Schemas validate message shape and local cross-field consistency, not an entire execution history. Inputs and artifact paths are relative, hash-linked references; path traversal and credential-bearing URLs are rejected. Exports may request recorded dependencies only. A future runner must resolve paths inside its owned directory, reject symlink escapes and enforce process/network/resource isolation.
+The supervisor enforces lifecycle ordering, sequence monotonicity, artifact hash verification, response-ID correlation and commit-barrier correlation. Schemas validate message shape and local cross-field consistency, not an entire execution history. Inputs and artifact paths are relative, hash-linked references; path traversal and credential-bearing URLs are rejected. Exports may request recorded dependencies only. The runner resolves paths inside its owned directory, rejects symlink escapes, isolates process networking and bounds execution/output. It runs trusted code, not arbitrary hostile adapters.
 
 Drain success requires zero pending work, skips, write errors and dead letters; otherwise return an explicit error/inconclusive result. Successful processing of one non-trade transaction can emit no events, but required nonempty campaign evidence cannot pass vacuously. An empty or partly unsupported decoder corpus is not an accepted baseline.
 
@@ -42,3 +43,5 @@ A checkpoint is not proof of all effects. The assertion compares the declared st
 `coverage` records interval, missing slots and explicit exclusions. `scenario` pins input, initial state, order, faults and limits. `assertion` pins checking lane, implementation, expected projection and required faults. `snapshot` pins drained boundary, state and same-run checkpoint. `run` pins scenario, consumer revision, adapter, runtime, fault outcomes, assertions and evidence. `incident` records the failed assertion and failure identity. `reducedCase` retains that identity, stable anchors and reproduction runs. `exportManifest` retains consumer/adapter/runtime locks, initial state, assertions, recorded dependencies and distinct reproduction/regression commands.
 
 All artifacts have schema version 1 and reject extra fields. Verdict and coverage are separate: incomplete whole-chain coverage does not automatically invalidate an offline metamorphic assertion. A PASS still requires its named assertion and every required fault to have succeeded. Exports/reduction schemas establish required provenance; implementing and verifying portable replay and failure-preserving reduction belongs to later phases.
+
+See [the Phase 2 workflow](phase-2-workflow.md) for actual supported recovery policies, result lanes and limits.

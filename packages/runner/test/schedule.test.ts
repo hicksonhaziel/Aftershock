@@ -14,11 +14,11 @@ test("duplicate scheduling retains stable anchors and labels only actual inserte
   assert.deepEqual(schedule(input, spec, true), [{ inputId: "a", faultId: null }, { inputId: "a", faultId: "dup" }, { inputId: "a", faultId: "dup" }, { inputId: "b", faultId: null }]);
   assert.equal(schedule(input, spec, false).length, 2);
 });
-test("missing anchors, unsupported crash requests and delivery bounds fail explicitly", () => {
+test("missing anchors, missing crash anchors and delivery bounds fail explicitly", () => {
   const changed = structuredClone(spec); changed.scenario.faults = [{ kind: "duplicate", faultId: "dup", deliveryId: "missing", additionalDeliveries: 1 }];
   assert.throws(() => schedule(input, changed, true), /INCONCLUSIVE/);
   changed.scenario.faults = [{ kind: "crash", faultId: "crash", boundary: "afterDurableEffectCommit", anchorEventId: "a", occurrence: 1 }];
-  assert.throws(() => schedule(input, changed, true), /UNSUPPORTED/);
+  assert.throws(() => schedule(input, changed, true), /INCONCLUSIVE/);
   changed.scenario.limits.deliveries = 1; assert.throws(() => schedule(input, changed, false), /limit/);
 });
 test("exit codes distinguish assertions, runner errors and missing required evidence", () => {

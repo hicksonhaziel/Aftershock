@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "revision": "fdcb07381ec5c2a971f3107a7f9ec53542c1fb60",
+  "migrations": [
+    {
+      "path": "migrations/20260721170252_initial_schema.sql",
+      "sha256": "a6d2b175c564bac8ca09464ad2b2e8ddb8889112b66c7a0103f54be0d2add766"
+    },
+    {
+      "path": "migrations/20260803000000_pool_decimals_nullable.sql",
+      "sha256": "821712865aac79d0bab0e04044ff99deb238cc43e1a3436fdf0e9d8e2f776074"
+    },
+    {
+      "path": "migrations/20260807000000_dead_letters.sql",
+      "sha256": "a8b13a66fc65df566b5b8092ec810137f82ace43d6f9f64ffbf203f5b1a550b3"
+    },
+    {
+      "path": "migrations/20260808000000_stream_gaps.sql",
+      "sha256": "b72dee04a8d5d79452e1da94133f1fa0d04e9120f9f9c765fbb4aa361b0be938"
+    },
+    {
+      "path": "migrations/20260808120000_stream_gaps_detected_by.sql",
+      "sha256": "d4a7ca3af46249ab94fef78ce345e9b0bba959e9c05364da5b45c41c1603867c"
+    },
+    {
+      "path": "migrations/20260813000000_numeric_amounts.sql",
+      "sha256": "9680c17dc9a3bfa528be0048171b2d5cb8a3b6f58b5dc2a5d362ce7589ebf462"
+    },
+    {
+      "path": "migrations/20260816000000_stream_gaps_unique_range.sql",
+      "sha256": "1c85ec3a5b0caf714df72c0bcb27b5b8c2cafda1bcba52f3da60cc1817911c92"
+    }
+  ]
+}
