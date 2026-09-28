@@ -2,7 +2,7 @@ import { mkdirSync, readFileSync, writeFileSync, copyFileSync, existsSync } from
 import { join, resolve } from "node:path";
 import { createHash, randomUUID } from "node:crypto";
 import { isDeepStrictEqual } from "node:util";
-import { regressionCaseSchema, regressionInputSchema, regressionLockSchema, emptyTradeStateSchema, exportManifestSchema, assertionSchema, scenarioSchema, runSchema, incidentSchema, captureManifestSchema } from "@aftershock/contracts";
+import { regressionCaseSchema, regressionInputSchema, regressionLockSchema, emptyTradeStateSchema, exportManifestSchema, assertionSchema, scenarioSchema, runSchema, incidentSchema, captureManifestSchema, attemptRecordSchema, reductionProofSchema } from "@aftershock/contracts";
 import type { RegressionCase, RegressionInput, RegressionLock, AdapterDescription } from "@aftershock/contracts";
 import { compareTradeState, expectedTradeState, eventId } from "@aftershock/projection";
 import type { Discrepancy } from "@aftershock/projection";
@@ -16,6 +16,13 @@ export function writeArtifact(directory: string, path: string, value: unknown) {
 }
 export const failureFields = (discrepancies: Discrepancy[]) => discrepancies.map(d => ({ kind: d.kind, key: d.key, ...(d.field ? { field: d.field } : {}) }))
   .sort((a, b) => { const left = JSON.stringify(a), right = JSON.stringify(b); return left < right ? -1 : left > right ? 1 : 0; });
+/** Fingerprint excludes changing expected totals, but preserves assertion, fault anchors and discrepancy direction. */
+export function failureFingerprint(spec: RegressionCase, projectionVersion: string, discrepancies: Discrepancy[]) {
+  const fields = discrepancies.map(d => ({ kind: d.kind, key: d.key, field: d.field ?? null,
+    direction: d.delta === undefined ? null : BigInt(d.delta) > 0n ? "excess" : "deficit" }))
+    .sort((a, b) => { const left = JSON.stringify(a), right = JSON.stringify(b); return left < right ? -1 : left > right ? 1 : 0; });
+  return digest(json({ schemaVersion: 1, assertion: spec.assertion, projectionVersion, faults: spec.scenario.faults, fields }));
+}
 export function schedule(input: RegressionInput, spec: RegressionCase, faulted: boolean) {
   const planned = input.deliveries.map(d => ({ inputId: d.inputId, faultId: null as string | null }));
   if (planned.length > spec.scenario.limits.deliveries) throw new Error("Delivery limit exceeded.");
@@ -87,6 +94,29 @@ export function loadCase(directory: string) {
   if (assertion.lane !== "application" || assertion.implementation.path !== "regression.mjs" || assertion.expected.path !== "expected.json" || assertion.assertionId !== spec.assertion || assertion.projectionVersion !== input.projectionVersion || !assertion.requiresNonemptyEvents
     || assertion.expected.sha256 !== files.get("expected.json")!.sha256 || assertion.implementation.sha256 !== files.get("regression.mjs")!.sha256
     || !isDeepStrictEqual(assertion.requiredFaultIds, spec.scenario.faults.map(f => f.faultId))) throw new Error("Assertion contract mismatch.");
+  for (const ref of [...(spec.history ?? []), ...(spec.reduction ? [spec.reduction] : [])]) {
+    if (files.get(ref.path)?.sha256 !== ref.sha256) throw new Error("Missing case history or reduction proof.");
+  }
+  if (spec.reduction) {
+    const proof = reductionProofSchema.parse(JSON.parse(readArtifact(directory, spec.reduction).toString()));
+    if (proof.failureFingerprint !== spec.failureFingerprint) throw new Error("Reduction failure identity mismatch.");
+    for (const attempt of proof.attempts) for (const evidence of attempt.evidence)
+      if (files.get(evidence.path)?.sha256 !== evidence.sha256) throw new Error("Missing reduction attempt evidence.");
+  }
+  for (const ref of spec.history ?? []) {
+    const record = attemptRecordSchema.parse(JSON.parse(readArtifact(directory, ref).toString()));
+    for (const evidence of record.evidence) if (files.get(evidence.path)?.sha256 !== evidence.sha256) throw new Error("Missing attempt evidence.");
+  }
+  if (existsSync(join(directory, "export-manifest.json"))) {
+    const bytes = readFileSync(join(directory, "export-manifest.json"));
+    if (bytes.length > 1024 * 1024 || !existsSync(join(directory, "export-manifest.sha256"))
+      || digest(bytes) !== readFileSync(join(directory, "export-manifest.sha256"), "utf8").trim()) throw new Error("Export manifest integrity failed.");
+    const exported = exportManifestSchema.parse(JSON.parse(bytes.toString()));
+    for (const ref of [exported.case, exported.consumer, exported.adapter, exported.initialState, ...exported.dependencies, ...exported.assertions])
+      if (files.get(ref.path)?.sha256 !== ref.sha256) throw new Error("Export artifact reference mismatch.");
+    if (exported.runtimeLock.path !== "runtime-lock.json" || exported.runtimeLock.sha256 !== digest(lockBytes)
+      || exported.source !== input.source) throw new Error("Export lock or source mismatch.");
+  }
   return { lock, spec, input, files };
 }
 export function exitCode(verdict: string) { return verdict === "PASS" ? 0 : verdict === "FAIL" ? 1 : ["INCONCLUSIVE", "UNSUPPORTED", "CANCELLED"].includes(verdict) ? 3 : 2; }
@@ -208,7 +238,12 @@ export async function executeCase(directory: string, variant: "faulty" | "fixed"
   const discrepancyRef = writeArtifact(output, "discrepancies.json", discrepancies);
   const summary = { schemaVersion: 1, runId, variant, faulted, verdict, ...(reason ? { reason } : {}),
     configuredFaults: faulted ? loaded?.spec.scenario.faults ?? [] : [], appliedFaults: applied, discrepancies,
-    cleanup, resetVerified, initialStateDigest, output };
+    cleanup, resetVerified, initialStateDigest, output,
+    ...(loaded ? { implementationDigest: loaded.lock.implementationDigest, sourceRevision: loaded.lock.sourceRevision,
+      consumerBuildDigest: digest(json({ adapter: loaded.files.get("adapter.mjs")!.sha256, variant })),
+      runtimeDigest: digest(json(loaded.lock)), inputDigest: loaded.spec.input.sha256,
+      scenarioDigest: digest(json(faulted ? loaded.spec.scenario : { ...loaded.spec.scenario, faults: [] })),
+      failureFingerprint: verdict === "FAIL" ? failureFingerprint(loaded.spec, loaded.input.projectionVersion, discrepancies) : null } : {}) };
   if (loaded && description) {
     const scenarioRef = writeArtifact(output, "scenario.json", faulted ? loaded.spec.scenario : { ...loaded.spec.scenario, faults: [] });
     const runtimeRef = writeArtifact(output, "runtime.json", loaded.lock);
@@ -221,7 +256,7 @@ export async function executeCase(directory: string, variant: "faulty" | "fixed"
     if (verdict === "FAIL" && snapshotRef) {
       const expectedRef = loaded.files.get("expected.json")!;
       writeArtifact(output, "incident.json", incidentSchema.parse({ schemaVersion: 1, incidentId: randomUUID(), run: runRef,
-        assertionId: loaded.spec.assertion, failureIdentity: digest(json(failureFields(discrepancies))), expected: expectedRef, actual: snapshotRef }));
+        assertionId: loaded.spec.assertion, failureIdentity: failureFingerprint(loaded.spec, loaded.input.projectionVersion, discrepancies), expected: expectedRef, actual: snapshotRef }));
     }
   }
   writeArtifact(output, "result.json", summary);
@@ -267,15 +302,15 @@ export function createCase(directory: string, inputValue: unknown, rawRoot: stri
   sealLock(directory, lock);
   return spec;
 }
-function sealLock(directory: string, lock: RegressionLock) {
+export function sealLock(directory: string, lock: RegressionLock) {
   const bytes = json(lock); writeFileSync(join(directory, "runtime-lock.json"), bytes, { mode: 0o600, flush: true });
   writeFileSync(join(directory, "runtime-lock.sha256"), digest(bytes) + "\n", { mode: 0o600, flush: true });
 }
 export function sealFailure(directory: string, discrepancies: Discrepancy[]) {
-  const { spec, lock } = loadCase(directory);
+  const { spec, lock, input } = loadCase(directory);
   const failure = failureFields(discrepancies);
   if (!failure.length || failure.some(d => d.kind !== "total-field")) throw new Error("Unexpected failure identity.");
-  const updated = regressionCaseSchema.parse({ ...spec, expectedFailure: failure });
+  const updated = regressionCaseSchema.parse({ ...spec, expectedFailure: failure, failureFingerprint: failureFingerprint(spec, input.projectionVersion, discrepancies) });
   writeFileSync(join(directory, "case.json"), json(updated), { mode: 0o600, flush: true });
   lock.files = lock.files.map(ref => ref.path === "case.json" ? { ...ref, sha256: digest(json(updated)) } : ref);
   sealLock(directory, lock);
@@ -296,6 +331,7 @@ export function exportCase(source: string, destination: string) {
     dependencies: [find("schema.sql")], assertions: [find("assertion.json")], networkPolicy: "recorded-responses-only",
     reproductionCommand: ["node", "regression.mjs", "reproduce", ".", "faulty"], regressionCommand: ["node", "regression.mjs", "test", ".", "fixed"],
     uncontrolledDependencies: ["host-scheduling", "local-docker-daemon"] }));
+  writeFileSync(join(destination, "export-manifest.sha256"), digest(readFileSync(join(destination, "export-manifest.json"))) + "\n", { flag: "wx", mode: 0o600 });
   writeFileSync(join(destination, "README.txt"), `Aftershock offline regression (intentional sample defect)\nRequires Linux, Node ${lock.node}, local Docker and cached image ${POSTGRES_IMAGE}.\nNo package installation or provider keys are needed. No images are pulled.\nRun: node regression.mjs test . faulty (exit 1), test . fixed (exit 0), or reproduce . faulty (exit 0 for the recorded defect).\nEach run creates and removes one bounded, network-disabled PostgreSQL container.\nThe adapter also has no network. Docker's local Unix socket is an explicit trusted dependency.\nThis tests already-decoded recorded events, not the external decoder or chain completeness.\n`, { flag: "wx", mode: 0o600 });
   return destination;
 }

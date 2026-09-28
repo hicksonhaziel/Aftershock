@@ -31,7 +31,10 @@
     "regression:reproduce": "node .aftershock/build/regression.mjs reproduce",
     "test:regression": "pnpm build:regression && tsx --test packages/runner/integration/*.test.ts",
     "external:state-check": "tsx apps/cli/src/external-state-check.ts",
-    "campaign:recovery": "tsx apps/cli/src/recovery-campaign.ts"
+    "campaign:recovery": "tsx apps/cli/src/recovery-campaign.ts",
+    "reduce": "tsx apps/cli/src/case-tools.ts reduce",
+    "export": "tsx apps/cli/src/case-tools.ts export",
+    "compare": "tsx apps/cli/src/case-tools.ts compare"
   },
   "devDependencies": {
     "@types/node": "22.18.6",

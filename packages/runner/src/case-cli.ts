@@ -3,7 +3,7 @@ import { resolve, join } from "node:path";
 import { existsSync, readFileSync } from "node:fs";
 import { isDeepStrictEqual } from "node:util";
 import { AdapterError } from "./index.js";
-import { executeCase, loadCase, failureFields, exitCode, digest } from "./regression.js";
+import { executeCase, loadCase, failureFields, failureFingerprint, exitCode, digest } from "./regression.js";
 async function main() {
   const [mode, path, variant = "fixed"] = process.argv.slice(2);
   if (!["test", "reproduce"].includes(mode ?? "") || !path || !["faulty", "fixed"].includes(variant) || process.argv.length > 5) throw new Error();
@@ -15,7 +15,8 @@ async function main() {
   if (mode === "reproduce" && ["PASS", "FAIL"].includes(verdict)) {
     verdict = result.verdict === "FAIL" && loaded.spec.expectedFailure.length > 0
       && result.appliedFaults.every(f => f.status === "applied")
-      && isDeepStrictEqual(failureFields(result.discrepancies), loaded.spec.expectedFailure) ? "PASS" : "FAIL";
+      && isDeepStrictEqual(failureFields(result.discrepancies), loaded.spec.expectedFailure)
+      && (!loaded.spec.failureFingerprint || failureFingerprint(loaded.spec, loaded.input.projectionVersion, result.discrepancies) === loaded.spec.failureFingerprint) ? "PASS" : "FAIL";
   }
   console.log(`${mode}: ${verdict}; consumer: ${result.verdict}; variant: ${variant}\nEvidence: ${result.output}`);
   process.exitCode = exitCode(verdict);
