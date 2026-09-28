@@ -6,7 +6,7 @@ Aftershock is being built to capture mainnet data through Solami, test isolated 
 
 ## Current status
 
-**Phases 0–2 complete for the declared CLI scope.** Aftershock captures and normalizes supported Solana trades, runs isolated PostgreSQL samples, kills a consumer at an observed durable commit, restarts it with recorded overlap, and exports an offline test that fails on the intentional defect and passes on the correction. Reconnect and omission checks keep incomplete outcomes explicit. See the [Phase 2 report](docs/phase-2-report.md) and [recovery workflow](docs/phase-2-workflow.md). Reduction, the workbench and the full external adapter remain later work.
+**Phases 0–3 complete for the declared CLI scope.** Aftershock captures and normalizes supported Solana trades, runs isolated PostgreSQL samples, kills and restarts a consumer, reduces the same failure to a smaller case, and exports an offline regression. The flagship was reduced from 19 transactions to one; both cases reproduced the intentional defect five times and passed with the correction five times. See the [Phase 3 report](docs/phase-3-report.md), [reduction workflow](docs/phase-3-workflow.md) and [scope review](docs/scope-review.md). Phase 4 is the API and browser workbench; the full external adapter remains later work.
 
 ## Local setup
 

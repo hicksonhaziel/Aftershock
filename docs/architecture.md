@@ -1,6 +1,6 @@
 # Initial architecture decisions
 
-Status: Phases 0–2 accepted for the declared CLI scope. Version 1 interfaces are implemented by the isolated runner and maintained PostgreSQL samples. See [Phase 2 acceptance](phase-2-report.md) and [recovery workflow](phase-2-workflow.md).
+Status: Phases 0–3 accepted for the declared CLI scope. Version 1 interfaces are implemented by the isolated runner and maintained PostgreSQL samples, with failure-preserving reduction and pinned repeated comparisons. See [Phase 3 acceptance](phase-3-report.md), [reduction workflow](phase-3-workflow.md) and [scope review](scope-review.md).
 
 ## Established boundaries
 
@@ -15,9 +15,9 @@ Status: Phases 0–2 accepted for the declared CLI scope. Version 1 interfaces a
 
 ## Next implementation gates
 
-1. Reduce cases while preserving failure identity and measure repeated fix outcomes in Phase 3.
-2. Extend the validated external decoder bridge into a full persistence adapter; preserve explicit v1 exclusions until its dependencies support that version.
-3. Build the workbench and verify broader reliability in their planned phases.
+1. Build the durable API, worker and browser workbench in Phase 4.
+2. Complete the external persistence adapter, second maintained sample and broader reliability checks in Phase 5; preserve explicit v1 exclusions until supported.
+3. Verify deployment and submission in Phase 6.
 
 The implemented CLI path uses immutable captured frames, pinned decoder observation, declared expected state, separate clean/duplicate runs in owned network-disabled PostgreSQL containers, concrete discrepancies and bundled offline regression commands. The maintained fixed sample only adds newly inserted event effects to totals and commits its checkpoint atomically. The supervisor observes real post-commit process kills and restarts against retained state; explicit overlap tests both builds. Reference, clean/faulted and application result lanes remain distinct. See the workflow guide for runtime/dependency limits.
 

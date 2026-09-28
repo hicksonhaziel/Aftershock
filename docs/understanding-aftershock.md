@@ -41,10 +41,18 @@ The buggy sample forgets where it stopped and counts the trade value twice. The 
 
 We also checked reconnecting, recovering a missing message, and a message that never arrives. If it never arrives, Aftershock says there is not enough evidence to confirm recovery.
 
+## Phase 3 is finished
+
+We made the failing example smaller: from 19 saved Solana transactions down to just one. That one transaction still shows exactly the same counting bug after the app crashes and restarts. The original recording is kept safely.
+
+We checked both the full example and the small example five times each. The buggy app showed the same problem every time. The corrected app passed every time, even though we also crashed it during each test.
+
+The small example can be copied outside this project and tested without Solami keys or an internet connection, using its required local database tools. If a required file is missing or its saved evidence changes, the test reports an error instead of pretending the fix works.
+
 ## What comes next
 
-Later phases shrink failing examples, build the visual dashboard, finish external-app campaigns and prepare the public demo.
+Phase 4 builds the visual dashboard and the service that runs these tests behind it. Later phases finish external-app campaigns, broader reliability checks and the public demo.
 
 Solami worked in our live checks. When the trial expires, you can request another one; the judges will use their own keys. Our offline development can continue using the saved recordings.
 
-The technical evidence and remaining limits are in the [Phase 0 report](phase-0-report.md), [Phase 1 report](phase-1-report.md) and [Phase 2 report](phase-2-report.md). Your private planning files, credentials and raw recordings stay out of GitHub.
+The technical evidence and remaining limits are in the [Phase 0 report](phase-0-report.md), [Phase 1 report](phase-1-report.md), [Phase 2 report](phase-2-report.md) and [Phase 3 report](phase-3-report.md). Your private planning files, credentials and raw recordings stay out of GitHub.
