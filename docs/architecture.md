@@ -1,6 +1,6 @@
 # Initial architecture decisions
 
-Status: Phases 0 and 1 accepted for the declared CLI scope. Version 1 interfaces are implemented by the isolated runner and maintained PostgreSQL samples. See [Phase 1 acceptance](phase-1-report.md) and [workflow](phase-1-workflow.md).
+Status: Phases 0–2 accepted for the declared CLI scope. Version 1 interfaces are implemented by the isolated runner and maintained PostgreSQL samples. See [Phase 2 acceptance](phase-2-report.md) and [recovery workflow](phase-2-workflow.md).
 
 ## Established boundaries
 
@@ -15,11 +15,11 @@ Status: Phases 0 and 1 accepted for the declared CLI scope. Version 1 interfaces
 
 ## Next implementation gates
 
-1. Add real commit-barrier process termination, restart/recovery and checkpoint evidence in Phase 2.
+1. Reduce cases while preserving failure identity and measure repeated fix outcomes in Phase 3.
 2. Extend the validated external decoder bridge into a full persistence adapter; preserve explicit v1 exclusions until its dependencies support that version.
-3. Add dependency-aware reduction, the workbench and broader reliability in their planned phases.
+3. Build the workbench and verify broader reliability in their planned phases.
 
-The implemented CLI path uses immutable captured frames, pinned decoder observation, declared expected state, separate clean/duplicate runs in owned network-disabled PostgreSQL containers, concrete discrepancies and bundled offline regression commands. The maintained fixed sample only adds newly inserted event effects to totals. See the workflow guide for runtime/dependency limits.
+The implemented CLI path uses immutable captured frames, pinned decoder observation, declared expected state, separate clean/duplicate runs in owned network-disabled PostgreSQL containers, concrete discrepancies and bundled offline regression commands. The maintained fixed sample only adds newly inserted event effects to totals and commits its checkpoint atomically. The supervisor observes real post-commit process kills and restarts against retained state; explicit overlap tests both builds. Reference, clean/faulted and application result lanes remain distinct. See the workflow guide for runtime/dependency limits.
 
 The proposed web layer is React/Vite with Fastify and a persistent worker. Those packages will be introduced with their working features. Public hosted execution will run maintained examples; private consumer execution belongs on the developer's local runner.
 

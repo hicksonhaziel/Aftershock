@@ -1,0 +1,188 @@
+{
+  "schemaVersion": 1,
+  "phase": 2,
+  "implementationRevision": "459b9029d1ca95c5ed2b5bc41e8350331a915dec",
+  "implementationDigest": "80b629f6a8b84fb0525b412602f48c4d84ac803d0d1da710fb732370d6664787",
+  "ci": {
+    "runId": 36452047264,
+    "conclusion": "success"
+  },
+  "tests": {
+    "unitProtocolIntegrity": 76,
+    "postgresIntegration": 4
+  },
+  "captureId": "b65159a0-3812-408a-9a6a-eae1e9cd373d",
+  "inputMode": "saved September 27 mainnet capture, replayed September 28",
+  "supportedTrades": 19,
+  "excludedV1Transactions": 6,
+  "campaignId": "5728d792-c8e3-4057-9bf7-cf0bba8a688e",
+  "campaignSha256": "ecac959fde6a953293e678838d3bfece88449fca16cf6a192adbd2ea146b71eb",
+  "runs": [
+    {
+      "runId": "2ea1afa9-6eff-4c12-812b-474d6deca305",
+      "variant": "faulty",
+      "faulted": false,
+      "verdict": "PASS",
+      "resetVerified": true,
+      "cleanup": "removed",
+      "initialStateDigest": "55b2497ee310d2a8a38d49ed9393f1164391c3077d3fe77b0feb1969701fc551",
+      "appliedFaults": []
+    },
+    {
+      "runId": "2a4f53a0-9a1a-4fe7-9e38-b1ff5fcd2a11",
+      "variant": "faulty",
+      "faulted": true,
+      "verdict": "FAIL",
+      "resetVerified": true,
+      "cleanup": "removed",
+      "initialStateDigest": "55b2497ee310d2a8a38d49ed9393f1164391c3077d3fe77b0feb1969701fc551",
+      "appliedFaults": [
+        {
+          "faultId": "crash-1",
+          "status": "applied"
+        }
+      ],
+      "signal": "SIGKILL",
+      "exitObserved": true,
+      "durableCheckpoint": "10",
+      "committedThrough": "11",
+      "anchorInputId": "source-18"
+    },
+    {
+      "runId": "4d88eae6-c126-41ed-af9c-de29a10b1b29",
+      "variant": "fixed",
+      "faulted": false,
+      "verdict": "PASS",
+      "resetVerified": true,
+      "cleanup": "removed",
+      "initialStateDigest": "55b2497ee310d2a8a38d49ed9393f1164391c3077d3fe77b0feb1969701fc551",
+      "appliedFaults": []
+    },
+    {
+      "runId": "9fd17e73-11a3-486b-a01e-b6cfab71332c",
+      "variant": "fixed",
+      "faulted": true,
+      "verdict": "PASS",
+      "resetVerified": true,
+      "cleanup": "removed",
+      "initialStateDigest": "55b2497ee310d2a8a38d49ed9393f1164391c3077d3fe77b0feb1969701fc551",
+      "appliedFaults": [
+        {
+          "faultId": "crash-1",
+          "status": "applied"
+        }
+      ],
+      "signal": "SIGKILL",
+      "exitObserved": true,
+      "durableCheckpoint": "11",
+      "committedThrough": "11",
+      "anchorInputId": "source-18"
+    }
+  ],
+  "faultyDiscrepancies": [
+    {
+      "kind": "total-field",
+      "key": "[\"6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P\",\"B4ZwQVekQuyWC7YJgcMTyVBCfVS9JgyU9K1T1Dqbpump\",\"sell\"]",
+      "field": "count",
+      "expected": "1",
+      "actual": "2",
+      "delta": "1"
+    },
+    {
+      "kind": "total-field",
+      "key": "[\"6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P\",\"B4ZwQVekQuyWC7YJgcMTyVBCfVS9JgyU9K1T1Dqbpump\",\"sell\"]",
+      "field": "solLamports",
+      "expected": "19082820",
+      "actual": "38165640",
+      "delta": "19082820"
+    },
+    {
+      "kind": "total-field",
+      "key": "[\"6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P\",\"B4ZwQVekQuyWC7YJgcMTyVBCfVS9JgyU9K1T1Dqbpump\",\"sell\"]",
+      "field": "tokenBaseUnits",
+      "expected": "1351089180462",
+      "actual": "2702178360924",
+      "delta": "1351089180462"
+    }
+  ],
+  "reference": {
+    "verdict": "PASS",
+    "sha256": "5eb3aa47202afa953605731e06075191340623a445a5abb5eeb0e20747435122",
+    "capturedPresent": 25,
+    "fullFilterMatches": 39,
+    "boundaryUnobserved": 14,
+    "captureCompleteness": "not-established"
+  },
+  "metamorphic": [
+    {
+      "variant": "faulty",
+      "verdict": "FAIL",
+      "cleanRunId": "2ea1afa9-6eff-4c12-812b-474d6deca305",
+      "faultedRunId": "2a4f53a0-9a1a-4fe7-9e38-b1ff5fcd2a11"
+    },
+    {
+      "variant": "fixed",
+      "verdict": "PASS",
+      "cleanRunId": "4d88eae6-c126-41ed-af9c-de29a10b1b29",
+      "faultedRunId": "9fd17e73-11a3-486b-a01e-b6cfab71332c"
+    }
+  ],
+  "recoveryMatrixId": "ffef47d7-acf5-42c4-ae08-06aabc003f1c",
+  "recovery": [
+    {
+      "mode": "disconnect",
+      "runId": "d3783166-8cdb-4bac-80b4-6cc8852baf13",
+      "verdict": "PASS",
+      "resetVerified": true,
+      "cleanup": "removed"
+    },
+    {
+      "mode": "temporary-omission",
+      "runId": "34c9f8b7-b071-4830-9e8a-eda80189c0ad",
+      "verdict": "PASS",
+      "resetVerified": true,
+      "cleanup": "removed"
+    },
+    {
+      "mode": "permanent-omission",
+      "runId": "6d62b408-b467-4288-8b49-2faa603d5377",
+      "verdict": "INCONCLUSIVE",
+      "resetVerified": true,
+      "cleanup": "removed"
+    }
+  ],
+  "externalStateCheckId": "716aa248-fa21-4da1-979d-a654db170270",
+  "externalCrashHook": "UNSUPPORTED",
+  "runtimeLockSha256": "c935d040f43c1509d666c7c45365afe49626bf212c11a53e87567ac208fff366",
+  "offline": {
+    "credentialScan": "PASS",
+    "network": "disabled",
+    "relocatedOutsideRepository": true,
+    "results": [
+      {
+        "mode": "test",
+        "variant": "faulty",
+        "expectedExit": 1,
+        "actualExit": 1
+      },
+      {
+        "mode": "test",
+        "variant": "fixed",
+        "expectedExit": 0,
+        "actualExit": 0
+      },
+      {
+        "mode": "reproduce",
+        "variant": "faulty",
+        "expectedExit": 0,
+        "actualExit": 0
+      },
+      {
+        "mode": "reproduce",
+        "variant": "fixed",
+        "expectedExit": 1,
+        "actualExit": 1
+      }
+    ]
+  }
+}
