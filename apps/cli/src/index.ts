@@ -29,7 +29,8 @@ if (command !== "doctor" && command !== "rpc-check") {
       console.log(`Shared contracts: loaded (${verdictSchema.options.length} verdicts)`);
       console.log(`Solami RPC configuration: ${valid ? "valid HTTPS URL" : endpoint ? "invalid; use the full HTTPS endpoint URL" : "missing"}`);
       console.log("Provider connectivity: not tested (use pnpm rpc:check)");
-      console.log("Bounded capture: available (pnpm capture); consumer execution: not implemented yet");
+      console.log("Bounded capture: available (pnpm capture); maintained sample execution: available (pnpm campaign)");
+      console.log("Case tools: pnpm reduce | pnpm compare | pnpm export; full external consumer execution remains unsupported");
       if (!supportedNode || (endpoint && !valid)) process.exitCode = 2;
       else if (!endpoint) process.exitCode = 3;
     }
