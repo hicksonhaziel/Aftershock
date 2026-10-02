@@ -34,7 +34,11 @@
     "campaign:recovery": "tsx apps/cli/src/recovery-campaign.ts",
     "reduce": "tsx apps/cli/src/case-tools.ts reduce",
     "export": "tsx apps/cli/src/case-tools.ts export",
-    "compare": "tsx apps/cli/src/case-tools.ts compare"
+    "compare": "tsx apps/cli/src/case-tools.ts compare",
+    "control": "tsx apps/cli/src/control.ts",
+    "api": "tsx apps/api/src/index.ts",
+    "worker": "tsx apps/worker/src/index.ts",
+    "test:control": "pnpm build:regression && tsx --test packages/control/integration/*.test.ts"
   },
   "devDependencies": {
     "@types/node": "22.18.6",

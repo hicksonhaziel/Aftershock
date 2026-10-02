@@ -6,11 +6,11 @@ import { AdapterError } from "./index.js";
 import { executeCase, loadCase, failureFields, failureFingerprint, exitCode, digest } from "./regression.js";
 async function main() {
   const [mode, path, variant = "fixed"] = process.argv.slice(2);
-  if (!["test", "reproduce"].includes(mode ?? "") || !path || !["faulty", "fixed"].includes(variant) || process.argv.length > 5) throw new Error();
+  if (!["test", "reproduce", "baseline"].includes(mode ?? "") || !path || !["faulty", "fixed"].includes(variant) || process.argv.length > 5) throw new Error();
   const directory = resolve(path), loaded = loadCase(directory);
   // The invoked runner must be the exact implementation pinned by this case.
   if (digest(readFileSync(process.argv[1]!)) !== loaded.files.get("regression.mjs")!.sha256) throw new Error();
-  const result = await executeCase(directory, variant as "faulty" | "fixed");
+  const result = await executeCase(directory, variant as "faulty" | "fixed", mode !== "baseline");
   let verdict = result.verdict;
   if (mode === "reproduce" && ["PASS", "FAIL"].includes(verdict)) {
     verdict = result.verdict === "FAIL" && loaded.spec.expectedFailure.length > 0

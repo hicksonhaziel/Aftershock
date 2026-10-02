@@ -1,0 +1,13 @@
+{
+  "name": "@aftershock/control",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.ts",
+  "dependencies": {
+    "@aftershock/contracts": "workspace:*",
+    "@aftershock/runner": "workspace:*",
+    "pg": "8.23.1"
+  },
+  "devDependencies": { "@types/pg": "8.23.1" }
+}

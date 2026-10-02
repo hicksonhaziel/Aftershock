@@ -29,5 +29,6 @@ jobs:
       - run: pnpm db:up
       - run: pnpm db:check
       - run: pnpm test:regression
+      - run: pnpm test:control
       - if: always()
         run: if [ -f .aftershock/dev-db.env ]; then pnpm db:down; fi

@@ -6,7 +6,7 @@ Aftershock is being built to capture mainnet data through Solami, test isolated 
 
 ## Current status
 
-**Phases 0–3 complete for the declared CLI scope.** Aftershock captures and normalizes supported Solana trades, runs isolated PostgreSQL samples, kills and restarts a consumer, reduces the same failure to a smaller case, and exports an offline regression. The flagship was reduced from 19 transactions to one; both cases reproduced the intentional defect five times and passed with the correction five times. See the [Phase 3 report](docs/phase-3-report.md), [reduction workflow](docs/phase-3-workflow.md) and [scope review](docs/scope-review.md). Phase 4 is the API and browser workbench; the full external adapter remains later work.
+**Phases 0–3 complete for the declared CLI scope; Phase 4 started.** Aftershock captures and normalizes supported Solana trades, runs isolated PostgreSQL samples, kills and restarts a consumer, reduces the same failure to a smaller case, and exports an offline regression. The flagship was reduced from 19 transactions to one; both cases reproduced the intentional defect five times and passed with the correction five times. See the [Phase 3 report](docs/phase-3-report.md), [reduction workflow](docs/phase-3-workflow.md) and [scope review](docs/scope-review.md). The initial [local API and durable worker](docs/workbench-api.md) now save campaigns, progress and incident evidence. The [Phase 4 progress report](docs/phase-4-progress.md) distinguishes this backend milestone from the pending browser workbench and full external adapter.
 
 ## Local setup
 
@@ -33,12 +33,14 @@ Set `SOLAMI_RPC_URL` in the ignored `.env` file to the endpoint issued by your S
 - `packages/runner`: isolated adapter process lifecycle and protocol enforcement.
 - `packages/projection`: expected trade state and concrete event/aggregate discrepancies.
 - `packages/reference`: finalized captured-signature membership and coverage reporting.
+- `packages/control`: persistent jobs, fenced worker ownership and private evidence storage.
+- `apps/api`, `apps/worker`: authenticated local campaign API and durable engine worker.
 - `apps/cli`: diagnostics, bounded live capture, and reference commands.
 - `docs/architecture.md`: implementation boundaries and unresolved decisions.
 
 ## Development checks
 
-`pnpm check` runs strict TypeScript checking and tests covering integer precision, schema compatibility, explicit adapter acknowledgements, and separate coverage/verdict reporting. CI runs the same checks.
+`pnpm check` runs strict TypeScript checking and tests covering integer precision, schema compatibility, explicit adapter acknowledgements, and separate coverage/verdict reporting. With the local database running, `pnpm test:regression` checks the offline engine and `pnpm test:control` checks PostgreSQL job ownership and actual API/worker execution. CI runs all three.
 
 Aftershock uses MIT; external source attribution is retained separately. See [local setup and licensing](docs/local-setup.md) and the [adapter protocol](docs/adapter-protocol.md).
 

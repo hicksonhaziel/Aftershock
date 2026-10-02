@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
+    "@aftershock/control": "workspace:*",
     "@aftershock/contracts": "workspace:*",
     "@triton-one/yellowstone-grpc": "7.0.1",
     "bs58": "6.0.0",

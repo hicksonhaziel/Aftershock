@@ -1,0 +1,148 @@
+{
+  "schemaVersion": 1,
+  "phase": 4,
+  "phaseStatus": "IN_PROGRESS",
+  "milestone": "Initial durable campaign API and worker",
+  "milestoneVerdict": "PASS",
+  "validationDate": "2026-10-02",
+  "tests": {
+    "unitProtocolIntegrity": 80,
+    "postgresOfflineRegression": 5,
+    "postgresApiWorker": 6
+  },
+  "httpAcceptance": {
+    "transport": "real localhost HTTP API with separate pnpm worker process",
+    "providerRequests": 0,
+    "browserAcceptance": false,
+    "receiptSha256": "d7a254f4e228191e1e85bbb0a7d0819aee66109bcb2424c7f593a5e28d74a9aa",
+    "attempts": [
+      {
+        "jobId": "69610498-7beb-45fa-b4af-103d400b0ad8",
+        "variant": "faulty",
+        "verdict": "FAIL",
+        "attempt": 1,
+        "baselineVerdict": "PASS",
+        "faultedRunId": "532954da-3f14-4725-a496-29342a7f7d1c",
+        "baselineRunId": "bf56cff4-94bd-4ea8-b588-53606404bf79",
+        "capture": {
+          "manifest": {
+            "path": "capture-manifest.json",
+            "sha256": "1ac0780d388854935fca9a2c1276fe7744fdcdcbe31f3a142d52154f3c40c83e"
+          },
+          "captureId": "b65159a0-3812-408a-9a6a-eae1e9cd373d"
+        },
+        "coverage": {
+          "scope": "Selected legacy/v0 recorded Pump.fun trades; no full-chain completeness claim",
+          "status": "not-assessed",
+          "endSlot": "451132921",
+          "startSlot": "451132920",
+          "exclusions": [
+            "source-1:pinned-consumer-v1-unsupported",
+            "source-3:pinned-consumer-v1-unsupported",
+            "source-4:pinned-consumer-v1-unsupported",
+            "source-6:pinned-consumer-v1-unsupported",
+            "source-14:pinned-consumer-v1-unsupported",
+            "source-15:pinned-consumer-v1-unsupported"
+          ],
+          "missingSlots": []
+        },
+        "sourceMode": "saved-mainnet-replay",
+        "baseRevision": "0e93ccb157906a5a535db481744eb301a75ecae1",
+        "implementationDigest": "fee6ea6ac38b4a9e5e3fd4ee5acae9fdecd1e08e1d397d944e35bd617d715500",
+        "runtimeDigest": "fc1a22d0b3ce906c1dc737979e2c86612a6692c4c461fd8746ef4adcb3df7fe9",
+        "inputDigest": "6f36d8cb380af5108c53875a3a05753c22f4df2caccb8a7b3cf5786756eb8558",
+        "scenarioDigest": "8f58d0e2a20d3f14ee81107b60fcf8d5e6489fbd5c3ceff83119fff398b05f5d",
+        "consumerBuildDigest": "22f4eabc39b19d3babcd5c1f8f6ff30c05cd8ef463995e89cb5e106ad2fa44c1",
+        "failureFingerprint": "e84ddce510bc99a28d373ec2bf05efe7d36c16c9a95d27e55f21b81d1b102c32",
+        "requiredFaultsApplied": true,
+        "resetVerified": true,
+        "cleanup": "removed",
+        "signal": "SIGKILL",
+        "exitObserved": true,
+        "anchorInputId": "source-18",
+        "observedEventRows": 19,
+        "discrepancies": [
+          {
+            "key": "[\"6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P\",\"B4ZwQVekQuyWC7YJgcMTyVBCfVS9JgyU9K1T1Dqbpump\",\"sell\"]",
+            "kind": "total-field",
+            "delta": "1",
+            "field": "count",
+            "actual": "2",
+            "expected": "1"
+          },
+          {
+            "key": "[\"6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P\",\"B4ZwQVekQuyWC7YJgcMTyVBCfVS9JgyU9K1T1Dqbpump\",\"sell\"]",
+            "kind": "total-field",
+            "delta": "19082820",
+            "field": "solLamports",
+            "actual": "38165640",
+            "expected": "19082820"
+          },
+          {
+            "key": "[\"6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P\",\"B4ZwQVekQuyWC7YJgcMTyVBCfVS9JgyU9K1T1Dqbpump\",\"sell\"]",
+            "kind": "total-field",
+            "delta": "1351089180462",
+            "field": "tokenBaseUnits",
+            "actual": "2702178360924",
+            "expected": "1351089180462"
+          }
+        ]
+      },
+      {
+        "jobId": "2165356d-8d56-41cd-9dbe-4e54807134cf",
+        "variant": "fixed",
+        "verdict": "PASS",
+        "attempt": 1,
+        "baselineVerdict": "PASS",
+        "faultedRunId": "a80bba1d-ec9e-431c-b5aa-14c871ceee93",
+        "baselineRunId": "c587710e-5029-4347-8bcc-772d62af88cc",
+        "capture": {
+          "manifest": {
+            "path": "capture-manifest.json",
+            "sha256": "1ac0780d388854935fca9a2c1276fe7744fdcdcbe31f3a142d52154f3c40c83e"
+          },
+          "captureId": "b65159a0-3812-408a-9a6a-eae1e9cd373d"
+        },
+        "coverage": {
+          "scope": "Selected legacy/v0 recorded Pump.fun trades; no full-chain completeness claim",
+          "status": "not-assessed",
+          "endSlot": "451132921",
+          "startSlot": "451132920",
+          "exclusions": [
+            "source-1:pinned-consumer-v1-unsupported",
+            "source-3:pinned-consumer-v1-unsupported",
+            "source-4:pinned-consumer-v1-unsupported",
+            "source-6:pinned-consumer-v1-unsupported",
+            "source-14:pinned-consumer-v1-unsupported",
+            "source-15:pinned-consumer-v1-unsupported"
+          ],
+          "missingSlots": []
+        },
+        "sourceMode": "saved-mainnet-replay",
+        "baseRevision": "0e93ccb157906a5a535db481744eb301a75ecae1",
+        "implementationDigest": "fee6ea6ac38b4a9e5e3fd4ee5acae9fdecd1e08e1d397d944e35bd617d715500",
+        "runtimeDigest": "fc1a22d0b3ce906c1dc737979e2c86612a6692c4c461fd8746ef4adcb3df7fe9",
+        "inputDigest": "6f36d8cb380af5108c53875a3a05753c22f4df2caccb8a7b3cf5786756eb8558",
+        "scenarioDigest": "8f58d0e2a20d3f14ee81107b60fcf8d5e6489fbd5c3ceff83119fff398b05f5d",
+        "consumerBuildDigest": "4b15a25986c5d4a488f337f3e54db752bedea43e0c54804bb7ddb2c29f803efb",
+        "failureFingerprint": null,
+        "requiredFaultsApplied": true,
+        "resetVerified": true,
+        "cleanup": "removed",
+        "signal": "SIGKILL",
+        "exitObserved": true,
+        "anchorInputId": "source-18",
+        "observedEventRows": 19,
+        "discrepancies": []
+      }
+    ]
+  },
+  "limitations": [
+    "Saved September 27 mainnet recording, no fresh provider calls",
+    "Two faulted HTTP acceptance attempts; no new five-repeat comparison",
+    "Initial API only; browser workbench and complete Phase 4 acceptance pending",
+    "Registered maintained sample code only; no private code upload",
+    "Lease recovery starts fresh state rather than resuming interrupted mutable state",
+    "Storage admission reserve is not an operating-system filesystem quota"
+  ]
+}

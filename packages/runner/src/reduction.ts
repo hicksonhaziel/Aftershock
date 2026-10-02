@@ -86,12 +86,12 @@ function size(directory: string): number {
 }
 
 /** Always execute the runner locked inside this case, never the caller's current implementation. */
-export async function runPinned(directory: string, variant: "faulty" | "fixed", timeoutMs: number, signal?: AbortSignal) {
+export async function runPinned(directory: string, variant: "faulty" | "fixed", timeoutMs: number, signal?: AbortSignal, faulted = true) {
   directory = resolve(directory);
   const loaded = loadCase(directory), started = Date.now();
   let text = "", overflow = false, cancelled = false;
   const code = await new Promise<number | null>((resolveExit, reject) => {
-    const child = spawn(process.execPath, [join(directory, "regression.mjs"), "test", directory, variant], {
+    const child = spawn(process.execPath, [join(directory, "regression.mjs"), faulted ? "test" : "baseline", directory, variant], {
       cwd: directory, env: { PATH: "/usr/bin:/bin", LANG: "C" }, stdio: ["ignore", "pipe", "pipe"], detached: true,
     });
     let hardStop: NodeJS.Timeout | undefined;
@@ -113,7 +113,7 @@ export async function runPinned(directory: string, variant: "faulty" | "fixed", 
     if (dirname(output) !== join(directory, "results") || !/^[a-f0-9-]{36}$/.test(output.slice(output.lastIndexOf("/") + 1))) throw new Error();
     const bytes = readFileSync(join(output, "result.json")); if (bytes.length > 16 * 1024 * 1024) throw new Error();
     result = JSON.parse(bytes.toString());
-    if (code !== exitCode(result.verdict) || result.variant !== variant || result.faulted !== true || !isDeepStrictEqual(result.configuredFaults, loaded.spec.scenario.faults)) throw new Error();
+    if (code !== exitCode(result.verdict) || result.variant !== variant || result.faulted !== faulted || !isDeepStrictEqual(result.configuredFaults, faulted ? loaded.spec.scenario.faults : [])) throw new Error();
     for (const name of ["delivery-trace.json", "recovery-trace.json", "discrepancies.json"]) {
       const bytes = readFileSync(join(output, name)); evidence.push({ path: name, sha256: digest(bytes) });
     }
@@ -122,11 +122,11 @@ export async function runPinned(directory: string, variant: "faulty" | "fixed", 
       readArtifact(output, snapshot.state); evidence.push({ path: "snapshot.json", sha256: digest(bytes) }, snapshot.state);
     }
   } catch { result = { runId: randomUUID(), verdict: cancelled ? "CANCELLED" : "RUNNER_ERROR", appliedFaults: [], discrepancies: [], resetVerified: false, cleanup: "not-verified" }; output = undefined; evidence = []; }
-  const requiredFaultsApplied = loaded.spec.scenario.faults.every(f => result.appliedFaults?.some((a: any) => a.faultId === f.faultId && a.status === "applied"));
+  const requiredFaultsApplied = !faulted || loaded.spec.scenario.faults.every(f => result.appliedFaults?.some((a: any) => a.faultId === f.faultId && a.status === "applied"));
   const record = attemptRecordSchema.parse({ schemaVersion: 1, runId: result.runId, variant, verdict: cancelled ? "CANCELLED" : result.verdict,
     sourceRevision: loaded.lock.sourceRevision, implementationDigest: loaded.lock.implementationDigest,
     consumerBuildDigest: digest(json({ adapter: loaded.files.get("adapter.mjs")!.sha256, variant })),
-    runtimeDigest: digest(json(loaded.lock)), inputDigest: loaded.spec.input.sha256, scenarioDigest: digest(json(loaded.spec.scenario)),
+    runtimeDigest: digest(json(loaded.lock)), inputDigest: loaded.spec.input.sha256, scenarioDigest: digest(json(faulted ? loaded.spec.scenario : { ...loaded.spec.scenario, faults: [] })),
     initialStateDigest: result.initialStateDigest ?? null,
     failureFingerprint: result.verdict === "FAIL" ? failureFingerprint(loaded.spec, loaded.input.projectionVersion, result.discrepancies) : null,
     requiredFaultsApplied, resetVerified: result.resetVerified ?? false, cleanup: result.cleanup ?? "not-verified",

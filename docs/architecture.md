@@ -15,13 +15,13 @@ Status: Phases 0–3 accepted for the declared CLI scope. Version 1 interfaces a
 
 ## Next implementation gates
 
-1. Build the durable API, worker and browser workbench in Phase 4.
+1. Complete the browser workbench and remaining API operations in Phase 4. The first [durable campaign API/worker slice](workbench-api.md) is implemented; [progress and acceptance gaps](phase-4-progress.md) remain explicit.
 2. Complete the external persistence adapter, second maintained sample and broader reliability checks in Phase 5; preserve explicit v1 exclusions until supported.
 3. Verify deployment and submission in Phase 6.
 
 The implemented CLI path uses immutable captured frames, pinned decoder observation, declared expected state, separate clean/duplicate runs in owned network-disabled PostgreSQL containers, concrete discrepancies and bundled offline regression commands. The maintained fixed sample only adds newly inserted event effects to totals and commits its checkpoint atomically. The supervisor observes real post-commit process kills and restarts against retained state; explicit overlap tests both builds. Reference, clean/faulted and application result lanes remain distinct. See the workflow guide for runtime/dependency limits.
 
-The proposed web layer is React/Vite with Fastify and a persistent worker. Those packages will be introduced with their working features. Public hosted execution will run maintained examples; private consumer execution belongs on the developer's local runner.
+The web layer uses Fastify and a persistent PostgreSQL worker for its initial campaign API; React/Vite is next. Control jobs live separately from disposable sample state. Expired jobs restart into a new attempt directory and fresh databases, and ownership fences reject stale progress/publication. Immutable saved inputs and actual engine traces remain the source of verdicts. Public hosted execution will run maintained examples; private consumer execution belongs on the developer's local runner. The current services are local, authenticated and limited to operator-imported maintained sample code.
 
 ## Provider documentation discrepancy
 

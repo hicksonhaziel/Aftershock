@@ -14,7 +14,9 @@ pnpm db:down
 
 The schema defines ownership, immutable business event identities, per-program/mint/side integer totals, and durable consumer checkpoints. It provides disposable state for the maintained samples. The external indexer uses its own pinned migrations in a separate owned database. Database schema tests do not establish that a consumer implements idempotency or atomic checkpoints; those are Phase 1/2 execution tests.
 
-The future supervisor must allocate one database per run, hold its ownership token, restrict the consumer to that database, and verify ownership before reset/removal. The bootstrap user is a local development owner, not a public-service security boundary. Remote arbitrary-code execution is outside this setup. Existing containers/databases for other projects are not managed by these commands.
+The implemented supervisor allocates a new owned container/database per run, restricts consumer state to that database, and verifies ownership before reset/removal. The bootstrap user is a local development owner, not a public-service security boundary. Remote arbitrary-code execution is outside this setup. Existing containers/databases for other projects are not managed by these commands.
+
+`pnpm control init` applies the separate persistent job migration to `aftershock_control` and creates a private local API token. `pnpm api` and `pnpm worker` reuse that control database while campaigns continue using disposable state. See [local campaign API setup](workbench-api.md) for importing saved cases, protected routes, recovery behavior and current limits. `pnpm test:control` creates and removes only fresh `aftershock_control_test_<uuid>` databases; it never clears normal project/job tables.
 
 ## License and attribution
 
