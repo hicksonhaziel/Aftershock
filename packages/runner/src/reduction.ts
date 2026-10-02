@@ -176,7 +176,7 @@ export function attachHistory(directory: string, attempts: Awaited<ReturnType<ty
   sealLock(directory, lock); loadCase(directory);
 }
 
-export async function reduceCase(source: string, destination: string, budgetValue: unknown, signal?: AbortSignal) {
+export async function reduceCase(source: string, destination: string, budgetValue: unknown, signal?: AbortSignal, onAttempt?: (record: AttemptRecord) => Promise<unknown>) {
   const budget = reductionBudgetSchema.parse(budgetValue), original = loadCase(source);
   if (!original.spec.failureFingerprint || !original.spec.expectedFailure.length) throw new AdapterError("UNSUPPORTED");
   mkdirSync(destination, { recursive: false, mode: 0o700 });
@@ -191,7 +191,7 @@ export async function reduceCase(source: string, destination: string, budgetValu
   const attempt = async (directory: string) => {
     const result = await recordedAttempt(directory, original, "faulty", Math.min(360000, Math.max(1, deadline - Date.now())), signal);
     historyBytes += result.output ? result.record.evidence.reduce((n, ref) => n + readArtifact(result.output!, ref, 64 * 1024 * 1024).length, 0) : 0;
-    attempts.push(result); writeArtifact(destination, `attempt-${attempts.length}.json`, result.record); return result;
+    attempts.push(result); writeArtifact(destination, `attempt-${attempts.length}.json`, result.record); await onAttempt?.(result.record); return result;
   };
   let final: Awaited<ReturnType<typeof runPinned>> | undefined;
   try {
@@ -254,7 +254,7 @@ export async function reduceCase(source: string, destination: string, budgetValu
   return { ...report, directory: output };
 }
 
-export async function compareCases(cases: string[], destination: string, repeats = 5, signal?: AbortSignal) {
+export async function compareCases(cases: string[], destination: string, repeats = 5, signal?: AbortSignal, onAttempt?: (record: AttemptRecord) => Promise<unknown>) {
   if (!Number.isInteger(repeats) || repeats < 1 || repeats > 10 || cases.length < 1 || cases.length > 4) throw new Error("Invalid comparison limits.");
   const inputs = cases.map(source => loadCase(source));
   if (new Set(inputs.map(c => c.spec.failureFingerprint)).size !== 1
@@ -272,7 +272,7 @@ export async function compareCases(cases: string[], destination: string, repeats
       if (signal?.aborted || Date.now() >= deadline || size(destination) + historyBytes + loaded.lock.files.reduce((n, r) => n + readArtifact(source, r, 64 * 1024 * 1024).length, 0) * 4 + 128 * 1024 * 1024 >= 1024 * 1024 * 1024) break;
       const outcome = await recordedAttempt(working, loaded, variant, Math.min(360000, deadline - Date.now()), signal);
       historyBytes += outcome.output ? outcome.record.evidence.reduce((n, ref) => n + readArtifact(outcome.output!, ref, 64 * 1024 * 1024).length, 0) : 0;
-      attempts.push(outcome); writeArtifact(destination, `case-${index}-attempt-${attempts.length}.json`, outcome.record);
+      attempts.push(outcome); writeArtifact(destination, `case-${index}-attempt-${attempts.length}.json`, outcome.record); await onAttempt?.(outcome.record);
     }
     const faulty = attempts.filter(a => a.record.variant === "faulty"), fixed = attempts.filter(a => a.record.variant === "fixed");
     const faultyConfirmed = faulty.filter(a => sameFailure(loaded, a)).length;

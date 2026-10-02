@@ -1,0 +1,657 @@
+{
+  "schemaVersion": 1,
+  "recordedOnUtc": "2026-10-02",
+  "scope": "Phase 4 maintained trade sample, local browser and actual engine; no public deployment or full external consumer campaign",
+  "checks": {
+    "unitTests": 81,
+    "controlIntegrationTests": 9,
+    "regressionIntegrationTests": 5,
+    "typecheck": "PASS",
+    "productionUiBuild": "PASS"
+  },
+  "browser": {
+    "origin": "http://127.0.0.1:8787",
+    "workflow": "fresh capture -> finalized reference -> normalize -> campaign -> incident -> reduce -> compare -> export -> download",
+    "activeRunRefresh": "PASS: saved run ID and deduplicated progress retained",
+    "sseCursorReconnect": "PASS: HTTP integration plus active browser refresh",
+    "rawSourceDrillDown": "PASS: original bytes, checksum, full signature, instruction path and exact amounts",
+    "layout": {
+      "desktopRequestedViewport": [
+        1280,
+        900
+      ],
+      "mobileRequestedViewport": [
+        390,
+        844
+      ],
+      "measuredCssWidths": [
+        1067,
+        325
+      ],
+      "documentHorizontalOverflow": false
+    },
+    "keyboard": "PASS: route activation, form focus order, skip link preserves run URL and focuses main",
+    "consoleErrors": 0,
+    "downloadChecksum": "PASS",
+    "incidentTextContrast": "PASS: checked rendered visible leaf text at >=4.5:1 after label corrections"
+  },
+  "jobs": {
+    "capture": {
+      "id": "b13c7728-c3b8-4072-8b7b-ad85d2a5050b",
+      "verdict": "PASS",
+      "attempt": 1
+    },
+    "firstReference": {
+      "id": "16d461fe-34a3-4994-9126-b60d359c1772",
+      "verdict": "INCONCLUSIVE",
+      "attempt": 1
+    },
+    "reference": {
+      "id": "62195124-03dc-4d7b-be30-74ed6dc08e3a",
+      "verdict": "PASS",
+      "attempt": 1
+    },
+    "normalize": {
+      "id": "cc81176f-8f7d-45ae-a318-1c28f068cafe",
+      "verdict": "PASS",
+      "attempt": 1
+    },
+    "campaign": {
+      "id": "d0075cc7-65f0-4faf-a096-5aa2c73437b3",
+      "verdict": "FAIL",
+      "attempt": 1
+    },
+    "reduce": {
+      "id": "3f81419c-15af-4cea-8337-5d8d1bd502d3",
+      "verdict": "PASS",
+      "attempt": 1
+    },
+    "compare": {
+      "id": "4e893524-e6d2-436c-9312-af258c6273e7",
+      "verdict": "PASS",
+      "attempt": 1
+    },
+    "export": {
+      "id": "0833d9c3-5470-4a19-955e-3de50cdc392e",
+      "verdict": "PASS",
+      "attempt": 1
+    }
+  },
+  "capture": {
+    "id": "79fb0390-b8c5-4a92-a920-ec69769c740f",
+    "manifestSha256": "1e4748870542ac26fc27f2c799cf948893255b8726384c001abc701a3e676a4e",
+    "startedAtUtc": "2026-10-02T15:01:00.459Z",
+    "endedAtUtc": "2026-10-02T15:01:03.834Z",
+    "transactions": 25,
+    "frames": 26,
+    "rawBytes": 206554,
+    "startSlot": "452644527",
+    "endSlot": "452644528",
+    "stopReason": "transaction-limit",
+    "requestedDurationSeconds": 5,
+    "requestedMaxTransactions": 25,
+    "requestedMaxBytes": 2097152
+  },
+  "reference": {
+    "id": "1065843c-1df3-420f-a537-92882196e184",
+    "evidenceSha256": "214015c4f61d532bdf9f4c7c6172d36e72f3c900344000cbca385ff14f59264f",
+    "verdict": "PASS",
+    "present": 25,
+    "absent": 0,
+    "unresolved": 0,
+    "fullFilterMatches": 32,
+    "boundaryNotObserved": 7,
+    "captureCompleteness": "not-established",
+    "firstAttempt": "INCONCLUSIVE; no sealed reference returned. A separate bounded diagnostic and browser retry passed; original failure remains inspectable."
+  },
+  "normalization": {
+    "transactionInputs": 16,
+    "businessEvents": 16,
+    "explicitV1Exclusions": 9,
+    "coverage": "not-assessed",
+    "referenceAndResponsesIncluded": true
+  },
+  "campaign": {
+    "baseline": "PASS",
+    "faulted": "FAIL",
+    "uniqueBusinessEventRows": 16,
+    "faultAnchor": "source-1",
+    "termination": "SIGKILL",
+    "requiredFaultsApplied": true,
+    "resetVerified": true,
+    "cleanup": "removed",
+    "discrepancies": [
+      {
+        "key": "[\"6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P\",\"4k3PfYpds6AjhdPavkKG9RkWfvXDbazuzgqnGaZiwLnL\",\"buy\"]",
+        "kind": "total-field",
+        "delta": "1",
+        "field": "count",
+        "actual": "4",
+        "expected": "3"
+      },
+      {
+        "key": "[\"6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P\",\"4k3PfYpds6AjhdPavkKG9RkWfvXDbazuzgqnGaZiwLnL\",\"buy\"]",
+        "kind": "total-field",
+        "delta": "4133481915",
+        "field": "tokenBaseUnits",
+        "actual": "3723891405081",
+        "expected": "3719757923166"
+      }
+    ],
+    "runtimeRecord": {
+      "sourceRevision": "b8e93e4651a79bf7f6f83487389905fac1efd4c6",
+      "implementationDigest": "f9c9338f4267f2734f57c26d344c1161f51902d75d847c8f80cb6874d04c11ef",
+      "consumerBuildDigest": "2a8db053974ad03afccb4f955c953741d7a280823266617cdf93f6c0e9ee0867",
+      "runtimeDigest": "fead4d0e562b1c78a6e51a3e1cc162b28cacec2838e707c084225393901f84fe",
+      "inputDigest": "d442facb5d385641007ac94bce3c726b03a6228f395c5b6e5053fcb94862bfdf",
+      "scenarioDigest": "f8009128e9d3768ed6df355afcce09fbc49b09529e559629f87d7f33d62dd76b",
+      "initialStateDigest": "55b2497ee310d2a8a38d49ed9393f1164391c3077d3fe77b0feb1969701fc551",
+      "failureFingerprint": "7a94ba5e4966329b24f47ee9269f1e72ad0b04978ab1c6c4736887298933a72a"
+    }
+  },
+  "reduction": {
+    "originalInputs": 16,
+    "originalRawBytes": 154553,
+    "retainedRawBytes": 18887,
+    "retainedInputs": [
+      "source-1"
+    ],
+    "removedInputs": [
+      "source-2",
+      "source-3",
+      "source-4",
+      "source-5",
+      "source-8",
+      "source-10",
+      "source-11",
+      "source-12",
+      "source-13",
+      "source-14",
+      "source-15",
+      "source-16",
+      "source-19",
+      "source-20",
+      "source-25"
+    ],
+    "failureFingerprint": "7a94ba5e4966329b24f47ee9269f1e72ad0b04978ab1c6c4736887298933a72a",
+    "originalPreserved": true,
+    "minimality": "1-minimal-under-declared-transaction-units"
+  },
+  "comparison": {
+    "repeats": 5,
+    "faultyConfirmed": 5,
+    "fixedPassed": 5,
+    "attempts": [
+      {
+        "runId": "07a193fb-69d1-4d62-858a-8b1a3f2a6867",
+        "cleanup": "removed",
+        "variant": "faulty",
+        "verdict": "FAIL",
+        "evidence": [
+          {
+            "path": "delivery-trace.json",
+            "sha256": "92f0fd0bf20a0ed25d9c6e50df5f1fc3d946f9850c21ffd5a2e4ad4c6cfe187c"
+          },
+          {
+            "path": "recovery-trace.json",
+            "sha256": "4765c9b1b877a24c5fb71b1efd94316626e9678a77832df4dad3b16938059298"
+          },
+          {
+            "path": "discrepancies.json",
+            "sha256": "226ed05c32648037006f54f243292ce2f894b8082809464ef5117984048860a6"
+          },
+          {
+            "path": "snapshot.json",
+            "sha256": "825d97fd600c01da53e181091ef7a418da7e970ddac97961703b0d4505ea2b7e"
+          },
+          {
+            "path": "snapshot-1.json",
+            "sha256": "1ed596cba8f28ff34cba895d45f645e342f6269c659c0d7c7dd53a1c7af67986"
+          }
+        ],
+        "durationMs": 9129,
+        "inputDigest": "a47b86a93bf3f0522aa612ac215c1bc2c81bd376950a8e5b451ba2cb543e37cd",
+        "startedAtUtc": "2026-10-02T15:12:26.406Z",
+        "resetVerified": true,
+        "runtimeDigest": "0160aeb38cc561097740b9c8c4af674baad21a3019aec7276a3375eb2e984986",
+        "schemaVersion": 1,
+        "scenarioDigest": "b8c1a94c4d0db2f76a31c5b4053a01ea142a362dd3aa5663454c26240864d1e2",
+        "sourceRevision": "b8e93e4651a79bf7f6f83487389905fac1efd4c6",
+        "failureFingerprint": "7a94ba5e4966329b24f47ee9269f1e72ad0b04978ab1c6c4736887298933a72a",
+        "initialStateDigest": "55b2497ee310d2a8a38d49ed9393f1164391c3077d3fe77b0feb1969701fc551",
+        "consumerBuildDigest": "2a8db053974ad03afccb4f955c953741d7a280823266617cdf93f6c0e9ee0867",
+        "implementationDigest": "f9c9338f4267f2734f57c26d344c1161f51902d75d847c8f80cb6874d04c11ef",
+        "requiredFaultsApplied": true
+      },
+      {
+        "runId": "63104884-69d1-4ac8-b350-61a41935d64e",
+        "cleanup": "removed",
+        "variant": "fixed",
+        "verdict": "PASS",
+        "evidence": [
+          {
+            "path": "delivery-trace.json",
+            "sha256": "92f0fd0bf20a0ed25d9c6e50df5f1fc3d946f9850c21ffd5a2e4ad4c6cfe187c"
+          },
+          {
+            "path": "recovery-trace.json",
+            "sha256": "c972598dee78925340206a463c2e845641cac196cedacd876d0c2c6abc78f144"
+          },
+          {
+            "path": "discrepancies.json",
+            "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+          },
+          {
+            "path": "snapshot.json",
+            "sha256": "c21a8a18f56cfea8ca2ab42c87a19ef1100f78543138de1549ecbe91cabb1580"
+          },
+          {
+            "path": "snapshot-1.json",
+            "sha256": "fdc95efb75e792c5dd3405e4596aeb3c762797c51f86f35bf4ac9208ccae5c53"
+          }
+        ],
+        "durationMs": 9444,
+        "inputDigest": "a47b86a93bf3f0522aa612ac215c1bc2c81bd376950a8e5b451ba2cb543e37cd",
+        "startedAtUtc": "2026-10-02T15:12:35.612Z",
+        "resetVerified": true,
+        "runtimeDigest": "0160aeb38cc561097740b9c8c4af674baad21a3019aec7276a3375eb2e984986",
+        "schemaVersion": 1,
+        "scenarioDigest": "b8c1a94c4d0db2f76a31c5b4053a01ea142a362dd3aa5663454c26240864d1e2",
+        "sourceRevision": "b8e93e4651a79bf7f6f83487389905fac1efd4c6",
+        "failureFingerprint": null,
+        "initialStateDigest": "55b2497ee310d2a8a38d49ed9393f1164391c3077d3fe77b0feb1969701fc551",
+        "consumerBuildDigest": "3964598ed054886efd4e9164e3375993a54fdeeb744845368876c702b00131ec",
+        "implementationDigest": "f9c9338f4267f2734f57c26d344c1161f51902d75d847c8f80cb6874d04c11ef",
+        "requiredFaultsApplied": true
+      },
+      {
+        "runId": "b09893bd-68a9-4bc1-bb20-e4ed63af68a8",
+        "cleanup": "removed",
+        "variant": "faulty",
+        "verdict": "FAIL",
+        "evidence": [
+          {
+            "path": "delivery-trace.json",
+            "sha256": "92f0fd0bf20a0ed25d9c6e50df5f1fc3d946f9850c21ffd5a2e4ad4c6cfe187c"
+          },
+          {
+            "path": "recovery-trace.json",
+            "sha256": "e02c8578e3b41fded1b82787c5af054ceac9e02f75b1389cb9e3e6473935859e"
+          },
+          {
+            "path": "discrepancies.json",
+            "sha256": "226ed05c32648037006f54f243292ce2f894b8082809464ef5117984048860a6"
+          },
+          {
+            "path": "snapshot.json",
+            "sha256": "a57115cc587aee12697a1e0327343b1021011ce71a86aa4c5e78f1300850e395"
+          },
+          {
+            "path": "snapshot-1.json",
+            "sha256": "1ed596cba8f28ff34cba895d45f645e342f6269c659c0d7c7dd53a1c7af67986"
+          }
+        ],
+        "durationMs": 9785,
+        "inputDigest": "a47b86a93bf3f0522aa612ac215c1bc2c81bd376950a8e5b451ba2cb543e37cd",
+        "startedAtUtc": "2026-10-02T15:12:45.120Z",
+        "resetVerified": true,
+        "runtimeDigest": "0160aeb38cc561097740b9c8c4af674baad21a3019aec7276a3375eb2e984986",
+        "schemaVersion": 1,
+        "scenarioDigest": "b8c1a94c4d0db2f76a31c5b4053a01ea142a362dd3aa5663454c26240864d1e2",
+        "sourceRevision": "b8e93e4651a79bf7f6f83487389905fac1efd4c6",
+        "failureFingerprint": "7a94ba5e4966329b24f47ee9269f1e72ad0b04978ab1c6c4736887298933a72a",
+        "initialStateDigest": "55b2497ee310d2a8a38d49ed9393f1164391c3077d3fe77b0feb1969701fc551",
+        "consumerBuildDigest": "2a8db053974ad03afccb4f955c953741d7a280823266617cdf93f6c0e9ee0867",
+        "implementationDigest": "f9c9338f4267f2734f57c26d344c1161f51902d75d847c8f80cb6874d04c11ef",
+        "requiredFaultsApplied": true
+      },
+      {
+        "runId": "99a89457-ec27-40c2-9f1d-2343eb4b368c",
+        "cleanup": "removed",
+        "variant": "fixed",
+        "verdict": "PASS",
+        "evidence": [
+          {
+            "path": "delivery-trace.json",
+            "sha256": "92f0fd0bf20a0ed25d9c6e50df5f1fc3d946f9850c21ffd5a2e4ad4c6cfe187c"
+          },
+          {
+            "path": "recovery-trace.json",
+            "sha256": "24904d68dc34bc7ac77189bfddf2332ec3fda7805ddf0efef173e9695cae11fb"
+          },
+          {
+            "path": "discrepancies.json",
+            "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+          },
+          {
+            "path": "snapshot.json",
+            "sha256": "71926009ae53f4f7c8b16cf7e603afad52c2a99e516ef8fbaccb45b3f4ab4b9c"
+          },
+          {
+            "path": "snapshot-1.json",
+            "sha256": "fdc95efb75e792c5dd3405e4596aeb3c762797c51f86f35bf4ac9208ccae5c53"
+          }
+        ],
+        "durationMs": 9329,
+        "inputDigest": "a47b86a93bf3f0522aa612ac215c1bc2c81bd376950a8e5b451ba2cb543e37cd",
+        "startedAtUtc": "2026-10-02T15:12:54.999Z",
+        "resetVerified": true,
+        "runtimeDigest": "0160aeb38cc561097740b9c8c4af674baad21a3019aec7276a3375eb2e984986",
+        "schemaVersion": 1,
+        "scenarioDigest": "b8c1a94c4d0db2f76a31c5b4053a01ea142a362dd3aa5663454c26240864d1e2",
+        "sourceRevision": "b8e93e4651a79bf7f6f83487389905fac1efd4c6",
+        "failureFingerprint": null,
+        "initialStateDigest": "55b2497ee310d2a8a38d49ed9393f1164391c3077d3fe77b0feb1969701fc551",
+        "consumerBuildDigest": "3964598ed054886efd4e9164e3375993a54fdeeb744845368876c702b00131ec",
+        "implementationDigest": "f9c9338f4267f2734f57c26d344c1161f51902d75d847c8f80cb6874d04c11ef",
+        "requiredFaultsApplied": true
+      },
+      {
+        "runId": "84454be0-a2b4-48e7-bd2a-a41a8b7467af",
+        "cleanup": "removed",
+        "variant": "faulty",
+        "verdict": "FAIL",
+        "evidence": [
+          {
+            "path": "delivery-trace.json",
+            "sha256": "92f0fd0bf20a0ed25d9c6e50df5f1fc3d946f9850c21ffd5a2e4ad4c6cfe187c"
+          },
+          {
+            "path": "recovery-trace.json",
+            "sha256": "747054ad8de4a1fc176e20761cd70de533aa870dd0cfe85aa3894c143a002cb4"
+          },
+          {
+            "path": "discrepancies.json",
+            "sha256": "226ed05c32648037006f54f243292ce2f894b8082809464ef5117984048860a6"
+          },
+          {
+            "path": "snapshot.json",
+            "sha256": "659fa4152d49567bf7cdd2f9bb66c54b5e6abf288002802249e6113a60f9cf74"
+          },
+          {
+            "path": "snapshot-1.json",
+            "sha256": "1ed596cba8f28ff34cba895d45f645e342f6269c659c0d7c7dd53a1c7af67986"
+          }
+        ],
+        "durationMs": 8336,
+        "inputDigest": "a47b86a93bf3f0522aa612ac215c1bc2c81bd376950a8e5b451ba2cb543e37cd",
+        "startedAtUtc": "2026-10-02T15:13:04.403Z",
+        "resetVerified": true,
+        "runtimeDigest": "0160aeb38cc561097740b9c8c4af674baad21a3019aec7276a3375eb2e984986",
+        "schemaVersion": 1,
+        "scenarioDigest": "b8c1a94c4d0db2f76a31c5b4053a01ea142a362dd3aa5663454c26240864d1e2",
+        "sourceRevision": "b8e93e4651a79bf7f6f83487389905fac1efd4c6",
+        "failureFingerprint": "7a94ba5e4966329b24f47ee9269f1e72ad0b04978ab1c6c4736887298933a72a",
+        "initialStateDigest": "55b2497ee310d2a8a38d49ed9393f1164391c3077d3fe77b0feb1969701fc551",
+        "consumerBuildDigest": "2a8db053974ad03afccb4f955c953741d7a280823266617cdf93f6c0e9ee0867",
+        "implementationDigest": "f9c9338f4267f2734f57c26d344c1161f51902d75d847c8f80cb6874d04c11ef",
+        "requiredFaultsApplied": true
+      },
+      {
+        "runId": "96a781ff-0b5a-4bc7-abe2-5257a00ac769",
+        "cleanup": "removed",
+        "variant": "fixed",
+        "verdict": "PASS",
+        "evidence": [
+          {
+            "path": "delivery-trace.json",
+            "sha256": "92f0fd0bf20a0ed25d9c6e50df5f1fc3d946f9850c21ffd5a2e4ad4c6cfe187c"
+          },
+          {
+            "path": "recovery-trace.json",
+            "sha256": "79247be5b970b14c957c7ee68fd27940bced2373af3973d0cf4faa9f97098d02"
+          },
+          {
+            "path": "discrepancies.json",
+            "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+          },
+          {
+            "path": "snapshot.json",
+            "sha256": "8d3dba3365a62e5780ffc71c99d4542cb3461a4de411ebdda5c70edc941f3211"
+          },
+          {
+            "path": "snapshot-1.json",
+            "sha256": "fdc95efb75e792c5dd3405e4596aeb3c762797c51f86f35bf4ac9208ccae5c53"
+          }
+        ],
+        "durationMs": 9815,
+        "inputDigest": "a47b86a93bf3f0522aa612ac215c1bc2c81bd376950a8e5b451ba2cb543e37cd",
+        "startedAtUtc": "2026-10-02T15:13:12.829Z",
+        "resetVerified": true,
+        "runtimeDigest": "0160aeb38cc561097740b9c8c4af674baad21a3019aec7276a3375eb2e984986",
+        "schemaVersion": 1,
+        "scenarioDigest": "b8c1a94c4d0db2f76a31c5b4053a01ea142a362dd3aa5663454c26240864d1e2",
+        "sourceRevision": "b8e93e4651a79bf7f6f83487389905fac1efd4c6",
+        "failureFingerprint": null,
+        "initialStateDigest": "55b2497ee310d2a8a38d49ed9393f1164391c3077d3fe77b0feb1969701fc551",
+        "consumerBuildDigest": "3964598ed054886efd4e9164e3375993a54fdeeb744845368876c702b00131ec",
+        "implementationDigest": "f9c9338f4267f2734f57c26d344c1161f51902d75d847c8f80cb6874d04c11ef",
+        "requiredFaultsApplied": true
+      },
+      {
+        "runId": "8f597867-a53c-4f56-83f2-c01d6bbfb41d",
+        "cleanup": "removed",
+        "variant": "faulty",
+        "verdict": "FAIL",
+        "evidence": [
+          {
+            "path": "delivery-trace.json",
+            "sha256": "92f0fd0bf20a0ed25d9c6e50df5f1fc3d946f9850c21ffd5a2e4ad4c6cfe187c"
+          },
+          {
+            "path": "recovery-trace.json",
+            "sha256": "b737f49088dfa4f4c8d87f4b82984b6b7b4011aa9b1ec369bc29034b4798e551"
+          },
+          {
+            "path": "discrepancies.json",
+            "sha256": "226ed05c32648037006f54f243292ce2f894b8082809464ef5117984048860a6"
+          },
+          {
+            "path": "snapshot.json",
+            "sha256": "e58e713f4faf937262dadc38a05821128f3a60f439ab50e1b08a5ca17d5083ee"
+          },
+          {
+            "path": "snapshot-1.json",
+            "sha256": "1ed596cba8f28ff34cba895d45f645e342f6269c659c0d7c7dd53a1c7af67986"
+          }
+        ],
+        "durationMs": 11563,
+        "inputDigest": "a47b86a93bf3f0522aa612ac215c1bc2c81bd376950a8e5b451ba2cb543e37cd",
+        "startedAtUtc": "2026-10-02T15:13:22.740Z",
+        "resetVerified": true,
+        "runtimeDigest": "0160aeb38cc561097740b9c8c4af674baad21a3019aec7276a3375eb2e984986",
+        "schemaVersion": 1,
+        "scenarioDigest": "b8c1a94c4d0db2f76a31c5b4053a01ea142a362dd3aa5663454c26240864d1e2",
+        "sourceRevision": "b8e93e4651a79bf7f6f83487389905fac1efd4c6",
+        "failureFingerprint": "7a94ba5e4966329b24f47ee9269f1e72ad0b04978ab1c6c4736887298933a72a",
+        "initialStateDigest": "55b2497ee310d2a8a38d49ed9393f1164391c3077d3fe77b0feb1969701fc551",
+        "consumerBuildDigest": "2a8db053974ad03afccb4f955c953741d7a280823266617cdf93f6c0e9ee0867",
+        "implementationDigest": "f9c9338f4267f2734f57c26d344c1161f51902d75d847c8f80cb6874d04c11ef",
+        "requiredFaultsApplied": true
+      },
+      {
+        "runId": "300c9bc4-cff6-4432-b6bf-d2ca402a204d",
+        "cleanup": "removed",
+        "variant": "fixed",
+        "verdict": "PASS",
+        "evidence": [
+          {
+            "path": "delivery-trace.json",
+            "sha256": "92f0fd0bf20a0ed25d9c6e50df5f1fc3d946f9850c21ffd5a2e4ad4c6cfe187c"
+          },
+          {
+            "path": "recovery-trace.json",
+            "sha256": "527162842dfdfcbafb4aef35d5584e9d7e5e1ab4a963321d2cd39d318b16650c"
+          },
+          {
+            "path": "discrepancies.json",
+            "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+          },
+          {
+            "path": "snapshot.json",
+            "sha256": "64e8e1b6bf87581c793a0e6f3e60e3cdb92f7e9ba835fa23c2d4f8788c058fd1"
+          },
+          {
+            "path": "snapshot-1.json",
+            "sha256": "fdc95efb75e792c5dd3405e4596aeb3c762797c51f86f35bf4ac9208ccae5c53"
+          }
+        ],
+        "durationMs": 10606,
+        "inputDigest": "a47b86a93bf3f0522aa612ac215c1bc2c81bd376950a8e5b451ba2cb543e37cd",
+        "startedAtUtc": "2026-10-02T15:13:34.407Z",
+        "resetVerified": true,
+        "runtimeDigest": "0160aeb38cc561097740b9c8c4af674baad21a3019aec7276a3375eb2e984986",
+        "schemaVersion": 1,
+        "scenarioDigest": "b8c1a94c4d0db2f76a31c5b4053a01ea142a362dd3aa5663454c26240864d1e2",
+        "sourceRevision": "b8e93e4651a79bf7f6f83487389905fac1efd4c6",
+        "failureFingerprint": null,
+        "initialStateDigest": "55b2497ee310d2a8a38d49ed9393f1164391c3077d3fe77b0feb1969701fc551",
+        "consumerBuildDigest": "3964598ed054886efd4e9164e3375993a54fdeeb744845368876c702b00131ec",
+        "implementationDigest": "f9c9338f4267f2734f57c26d344c1161f51902d75d847c8f80cb6874d04c11ef",
+        "requiredFaultsApplied": true
+      },
+      {
+        "runId": "f1e69978-0e31-4118-b552-74ef6eb36ff2",
+        "cleanup": "removed",
+        "variant": "faulty",
+        "verdict": "FAIL",
+        "evidence": [
+          {
+            "path": "delivery-trace.json",
+            "sha256": "92f0fd0bf20a0ed25d9c6e50df5f1fc3d946f9850c21ffd5a2e4ad4c6cfe187c"
+          },
+          {
+            "path": "recovery-trace.json",
+            "sha256": "dcec42ab14cae92b0040d448b54445d3c3ad75b9f2b3d636840f3d9645173a79"
+          },
+          {
+            "path": "discrepancies.json",
+            "sha256": "226ed05c32648037006f54f243292ce2f894b8082809464ef5117984048860a6"
+          },
+          {
+            "path": "snapshot.json",
+            "sha256": "2419565b0d2db31e876e8603b97e4bb05d3d81bd2dad834528f53a529551e931"
+          },
+          {
+            "path": "snapshot-1.json",
+            "sha256": "1ed596cba8f28ff34cba895d45f645e342f6269c659c0d7c7dd53a1c7af67986"
+          }
+        ],
+        "durationMs": 10702,
+        "inputDigest": "a47b86a93bf3f0522aa612ac215c1bc2c81bd376950a8e5b451ba2cb543e37cd",
+        "startedAtUtc": "2026-10-02T15:13:45.228Z",
+        "resetVerified": true,
+        "runtimeDigest": "0160aeb38cc561097740b9c8c4af674baad21a3019aec7276a3375eb2e984986",
+        "schemaVersion": 1,
+        "scenarioDigest": "b8c1a94c4d0db2f76a31c5b4053a01ea142a362dd3aa5663454c26240864d1e2",
+        "sourceRevision": "b8e93e4651a79bf7f6f83487389905fac1efd4c6",
+        "failureFingerprint": "7a94ba5e4966329b24f47ee9269f1e72ad0b04978ab1c6c4736887298933a72a",
+        "initialStateDigest": "55b2497ee310d2a8a38d49ed9393f1164391c3077d3fe77b0feb1969701fc551",
+        "consumerBuildDigest": "2a8db053974ad03afccb4f955c953741d7a280823266617cdf93f6c0e9ee0867",
+        "implementationDigest": "f9c9338f4267f2734f57c26d344c1161f51902d75d847c8f80cb6874d04c11ef",
+        "requiredFaultsApplied": true
+      },
+      {
+        "runId": "90ba4419-ebd2-42f3-9873-828ecdd5e39c",
+        "cleanup": "removed",
+        "variant": "fixed",
+        "verdict": "PASS",
+        "evidence": [
+          {
+            "path": "delivery-trace.json",
+            "sha256": "92f0fd0bf20a0ed25d9c6e50df5f1fc3d946f9850c21ffd5a2e4ad4c6cfe187c"
+          },
+          {
+            "path": "recovery-trace.json",
+            "sha256": "e755a91e94ac1830453961647ee097e40d4c7aebfbc5bc15b05710f4fb17267e"
+          },
+          {
+            "path": "discrepancies.json",
+            "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+          },
+          {
+            "path": "snapshot.json",
+            "sha256": "906f3203cbd9623e5d99bcddf1f8721079202e42a1934363accac5f5f36c52d8"
+          },
+          {
+            "path": "snapshot-1.json",
+            "sha256": "fdc95efb75e792c5dd3405e4596aeb3c762797c51f86f35bf4ac9208ccae5c53"
+          }
+        ],
+        "durationMs": 10411,
+        "inputDigest": "a47b86a93bf3f0522aa612ac215c1bc2c81bd376950a8e5b451ba2cb543e37cd",
+        "startedAtUtc": "2026-10-02T15:13:56.047Z",
+        "resetVerified": true,
+        "runtimeDigest": "0160aeb38cc561097740b9c8c4af674baad21a3019aec7276a3375eb2e984986",
+        "schemaVersion": 1,
+        "scenarioDigest": "b8c1a94c4d0db2f76a31c5b4053a01ea142a362dd3aa5663454c26240864d1e2",
+        "sourceRevision": "b8e93e4651a79bf7f6f83487389905fac1efd4c6",
+        "failureFingerprint": null,
+        "initialStateDigest": "55b2497ee310d2a8a38d49ed9393f1164391c3077d3fe77b0feb1969701fc551",
+        "consumerBuildDigest": "3964598ed054886efd4e9164e3375993a54fdeeb744845368876c702b00131ec",
+        "implementationDigest": "f9c9338f4267f2734f57c26d344c1161f51902d75d847c8f80cb6874d04c11ef",
+        "requiredFaultsApplied": true
+      }
+    ]
+  },
+  "cases": [
+    {
+      "id": "f0d19804-3384-4666-a7df-a3f4923acee9",
+      "lockSha256": "fead4d0e562b1c78a6e51a3e1cc162b28cacec2838e707c084225393901f84fe"
+    },
+    {
+      "id": "5134bd63-b737-4bbf-a249-0f848cc979d6",
+      "lockSha256": "965be940ee8b62d7ab58b2397d37b1429ab87166bdf33124f82ca5059f7afa25"
+    },
+    {
+      "id": "54d7722d-f1ed-4c84-ac88-230fe8dc7580",
+      "lockSha256": "7f20bfd19d0bb9de2c490a0cdfdbe879a8623767eb8ab68d8111c19f37bb480e"
+    },
+    {
+      "id": "e84bf228-95c8-4a5a-804c-2341a56fba2b",
+      "lockSha256": "920d98c3d742dfe9ce1857b276c3acbf21ae3e6e97c4dd7d14ea3395481e9c65"
+    }
+  ],
+  "export": {
+    "name": "aftershock-case.tar.gz",
+    "bytes": 2512204,
+    "sha256": "bb30cd1d50cd00c4f65c2d4f6bb32d80639db87a5b54bd0701397c4af04ffcb8"
+  },
+  "offlineCommands": [
+    {
+      "command": "test",
+      "variant": "faulty",
+      "exitCode": 1,
+      "expectedExitCode": 1
+    },
+    {
+      "command": "test",
+      "variant": "fixed",
+      "exitCode": 0,
+      "expectedExitCode": 0
+    },
+    {
+      "command": "reproduce",
+      "variant": "faulty",
+      "exitCode": 0,
+      "expectedExitCode": 0
+    },
+    {
+      "command": "reproduce",
+      "variant": "fixed",
+      "exitCode": 1,
+      "expectedExitCode": 1
+    }
+  ],
+  "offlineEnvironment": "Export extracted outside repository; only PATH/LANG passed; exact bundled runtime, network-disabled consumer and owned pinned PostgreSQL containers; no provider configuration",
+  "limits": [
+    "Finite measured repeatability, not universal determinism",
+    "1-minimal under declared transaction units, not globally smallest",
+    "Nine explicit v1 exclusions",
+    "Both capture and finalized reference use Solami",
+    "Hosted sample authentication/path tested but not deployed",
+    "Application storage monitoring is not a hard filesystem quota",
+    "Arbitrary private external consumer execution remains unsupported"
+  ],
+  "privateEvidencePolicy": "Full recordings, endpoint credentials, local paths, browser screenshots and detailed receipts remain local; this receipt contains sanitized measured facts and hashes."
+}

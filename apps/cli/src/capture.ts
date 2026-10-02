@@ -43,7 +43,7 @@ try {
   clearTimeout(setupTimer);
   durationTimer = setTimeout(() => stop("duration"), config.durationSeconds * 1000);
   let transactions = 0;
-  let frames = 0;
+  let frames = 0, rawBytes = 0, lastProgress = 0;
   console.log(`Capturing up to ${config.maxTransactions} transactions for ${config.durationSeconds}s.`);
   try {
     while (!state.stopReason) {
@@ -52,7 +52,7 @@ try {
       if (!raw) { stop("stream-ended"); break; }
       const sequence = writer.append(raw);
       if (sequence === null) { stop("byte-limit"); break; }
-      frames++;
+      frames++; rawBytes += raw.length;
       let update: SubscribeUpdate;
       try { update = SubscribeUpdate.decode(raw); }
       catch { stop("decode-error"); break; }
@@ -68,6 +68,9 @@ try {
       } else {
         writer.classify(sequence, { kind: "control" });
         if (update.ping) await stream.writeRaw(Buffer.from(SubscribeRequest.encode(SubscribeRequest.fromPartial({ ping: { id: 1 } })).finish()));
+      }
+      if (process.env.AFTERSHOCK_PROGRESS === "1" && Date.now() - lastProgress >= 1000) {
+        lastProgress = Date.now(); console.log(`AFTERSHOCK_PROGRESS=${JSON.stringify({ frames, transactions, rawBytes, receivedAtUtc: new Date().toISOString() })}`);
       }
       if (transactions >= config.maxTransactions) stop("transaction-limit");
       else if (frames >= config.maxFrames) stop("frame-limit");

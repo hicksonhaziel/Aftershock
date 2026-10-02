@@ -10,7 +10,7 @@ export const regressionInputSchema = z.strictObject({
   parent: z.strictObject({ captureId: z.uuid(), manifest: artifactRefSchema }).nullable(),
   prerequisites: z.array(z.strictObject({ inputId: id, requires: z.array(id).max(1000), reason: z.string().min(1).max(500) })).max(1000).optional(),
   retainedInputs: z.array(z.strictObject({ inputId: id, reason: z.string().min(1).max(500) })).max(1000).optional(),
-  coverage: coverageSchema, evidence: z.array(artifactRefSchema).max(20),
+  coverage: coverageSchema, evidence: z.array(artifactRefSchema).max(24),
   deliveries: z.array(z.strictObject({ inputId: id, raw: artifactRefSchema, sourceSequence: unsignedInteger, slot: unsignedInteger, signature: eventIdentitySchema.shape.signature, events: z.array(projectedTradeSchema).max(1000) })).min(1).max(1000),
 }).refine(v => new Set(v.deliveries.map(d => d.inputId)).size === v.deliveries.length, "Duplicate input IDs")
   .refine(v => v.deliveries.reduce((n, d) => n + d.events.length, 0) <= 10000, "Too many events")

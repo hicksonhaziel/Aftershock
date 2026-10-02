@@ -10,7 +10,16 @@
     "resolveJsonModule": true,
     "noEmit": true,
     "skipLibCheck": true,
-    "types": ["node"]
+    "types": [
+      "node"
+    ]
   },
-  "include": ["apps/**/*.ts", "packages/**/*.ts", "examples/**/*.ts"]
+  "include": [
+    "apps/**/*.ts",
+    "packages/**/*.ts",
+    "examples/**/*.ts"
+  ],
+  "exclude": [
+    "apps/workbench"
+  ]
 }

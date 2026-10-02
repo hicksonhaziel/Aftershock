@@ -1,21 +1,29 @@
-# Local campaign API and worker
+# Evidence workbench, API and worker
 
-This is the initial Phase 4 backend, using the existing maintained trade sample engine. There is no browser workbench yet. Private consumer uploads and arbitrary code execution are unsupported.
+The React/Vite workbench drives the maintained trade sample through recording, reference checks, scenarios, incidents, reduction, exports and repeated fix comparisons. Fastify serves the built interface and authenticated API. PostgreSQL keeps projects, immutable case registrations, job identities and progress separately from disposable consumer state. Private external consumer execution remains unsupported; the full external adapter is Phase 5.
 
 ## Start locally
 
-Use the [local setup](local-setup.md) prerequisites: exact Node 22.22.2, pnpm 10.33.0, Docker, the cached pinned PostgreSQL image, and Linux user/network namespaces. No provider credentials or new requests are needed for a saved-input campaign.
+Use the [local setup](local-setup.md) prerequisites: exact Node 22.22.2, pnpm 10.33.0, Docker, the cached pinned PostgreSQL image, and Linux user/network namespaces.
 
 ```sh
 pnpm install --frozen-lockfile
 pnpm db:up
 pnpm build:regression
+pnpm build:workbench
 pnpm control init
 pnpm control project "My trade tests"
-pnpm control import <project-id> <normalized-directory> my-seed crash
+pnpm control sample <project-id>
 ```
 
-The project and import commands return IDs. A normalized directory comes from `pnpm capture:normalize`; see the [CLI workflow](phase-1-workflow.md). The default import scenario is `crash`; `duplicate` is also selectable. Only cases matching the current maintained build are accepted. Rebuilding requires a new import if executable hashes changed; already registered cases keep their original pinned runtime.
+The last command creates a clearly labelled **synthetic** maintained sample, with no provider access. To register an existing normalized mainnet case instead:
+
+```sh
+pnpm control import <project-id> <normalized-directory> my-seed crash
+pnpm control capture-import <project-id> <capture-directory>
+```
+
+Operator-only imports accept local paths. Browser requests accept IDs and bounded settings. Imported executables must match the current maintained build. Already registered cases retain their original pinned runtime when the build changes. Raw recordings, cases and attempts stay in ignored `.aftershock/workbench/`; the control tables stay in the dedicated `aftershock_control` database.
 
 Run these in separate terminals:
 
@@ -24,59 +32,68 @@ pnpm api
 pnpm worker
 ```
 
-The API listens on `127.0.0.1:8787`. Job tables live in the `aftershock_workbench` schema of `aftershock_control`, on the persistent development volume. Cases and attempt evidence live under ignored `.aftershock/workbench/`. The random API token is saved there as `api-token` with mode 0600. All routes except `/health` require `Authorization: Bearer <token>`. Do not paste the token into browser URLs, chat, logs or tracked files. The services do not load provider `.env` into consumer processes.
+Open `http://127.0.0.1:8787` and select **Connect runner**. Same-origin loopback pairing creates an eight-hour HttpOnly, SameSite=Strict session. Page refresh restores that session and the hash-based run/case URL. The server also accepts an operator Bearer token for CLI integrations; its 0600 file is `.aftershock/workbench/api-token`. Never put it in URLs, logs, screenshots, chat or tracked files. `/`, static UI assets, `/health` and session status are public; project data and mutations require authentication. Foreign origins are rejected.
 
-For a local API request without printing the token, save and run the following Node script inside the repository, using your project/case IDs:
+For interface development, `pnpm --filter @aftershock/workbench dev` proxies `/api` to the local server. Set the API's `AFTERSHOCK_WORKBENCH_ORIGIN` to the exact development origin, such as `http://127.0.0.1:5173`. The default production build uses the same origin for UI and API.
 
-```js
-import { readFileSync } from "node:fs";
-import { randomUUID } from "node:crypto";
-const response = await fetch("http://127.0.0.1:8787/runs", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    Authorization: "Bearer " + readFileSync(".aftershock/workbench/api-token", "utf8").trim(),
-  },
-  body: JSON.stringify({
-    projectId: "<project-id>", caseId: "<case-id>", variant: "faulty",
-    maxSeconds: 360, idempotencyKey: randomUUID(),
-  }),
-});
-console.log("HTTP status:", response.status);
-if (response.ok) console.log("Saved job ID:", (await response.json()).id);
-```
+## Live inputs and references
 
-## Routes and meaning
+Live recording uses the runner's local `.env` provider configuration, never browser credentials. Configure Solami according to the [capture workflow](phase-1-workflow.md). Normalization also requires the verified Rust decoder from the [integration setup](../integrations/solana-realtime-indexer/README.md); `AFTERSHOCK_DECODER_BINARY` can identify that local binary. Its hash must match the committed decoder lock. Missing decoder/setup is a runner error. Unsupported v1 input without explicit exclusion is `UNSUPPORTED`.
+
+The browser's Pump.fun filter means successful non-vote transactions **mentioning** the account; it does not establish invocation or swaps. Captures stop at configured time/transaction/byte limits or 200 frames. Fresh receipt counts and last-received timestamps are saved as progress. Sealing verifies byte integrity. Finalized membership is a separate operation: full-filter reconstruction is limited to fewer than four slot increments, and membership checks to fewer than sixteen. Wider or unavailable intervals remain inconclusive. A complete reference does not establish capture completeness; partial boundary matches remain visible.
+
+Normalize after finalization to include the sealed reference and its checksummed RPC response files in the locked case. Finalizing later does not retroactively change an existing immutable case. Normalization records each v1 exclusion explicitly. Consumer execution is replay over saved inputs, even when the recording was collected moments earlier.
+
+## Routes
 
 | Route | Purpose |
 | --- | --- |
-| `GET /health` | Local service readiness; no database or engine correctness claim |
-| `GET /capabilities` | Supported maintained variants/scenarios and current limits/gaps |
-| `GET /projects`, `POST /projects` | List/create projects for the maintained adapter |
-| `GET /projects/:id/cases` | Imported case IDs, provenance, coverage and hashes |
-| `GET /projects/:id/runs` | Recent persistent jobs |
-| `POST /runs` | Queue clean baseline followed by faulted application assertion |
-| `GET /runs/:id` | State, attempt, verdict and published evidence references |
-| `POST /runs/:id/cancel` | Cancel queued work or ask the owning worker to stop/clean up |
-| `GET /runs/:id/events?after=N` | Saved progress and the next per-job cursor |
-| `GET /runs/:id/stream` | SSE progress; resume using `Last-Event-ID` or `after=N` |
-| `GET /runs/:id/incident` | Failed assertion, fingerprint, exact discrepancies and provenance |
-| `GET /runs/:id/artifacts/:artifactId` | Whitelisted JSON evidence with hash verification |
+| `GET /health`, `GET /session`, `POST /session` | Read readiness/session status and establish protected browser access |
+| `GET /capabilities` | Maintained adapter capabilities, variants and limits |
+| `GET /projects`, `POST /projects` | List/create projects |
+| `GET /projects/:id/captures` | Sealed recording manifests and separate finalized reference summaries |
+| `GET /projects/:id/cases`, `GET /cases/:id` | Immutable case library, contract, input, reduction and reproduction history |
+| `GET /cases/:id/sources/:inputId` | Checksummed original source bytes (base64), labelled synthetic or protobuf, signature, slot and decoded business-event identities |
+| `GET /projects/:id/runs`, `POST /runs` | List jobs or schedule a typed bounded operation |
+| `GET /runs/:id`, `POST /runs/:id/cancel` | Saved job/result and cancellation |
+| `GET /runs/:id/events?after=N`, `GET /runs/:id/stream` | Durable cursor-based progress and SSE reconnect |
+| `GET /runs/:id/incident` | Proven assertion failure, fingerprint, discrepancies and source provenance |
+| `GET /runs/:id/artifacts/:artifactId` | Whitelisted JSON evidence with checksum verification |
+| `GET /runs/:id/download` | Checksummed portable case archive for a successful export job |
 
-Create a project with `{ "name": "My tests", "adapter": "maintained-trade-ledger-v1" }`. Job bodies accept only project/case ID, `faulty` or `fixed`, a 10–360 second budget, and an 8–100 character request key using letters, digits, underscores or hyphens. Reusing the key with identical settings returns the same durable ID; different settings return 409. Unsupported settings and code paths are rejected before scheduling. A case must belong to its project.
+Every operation body includes `projectId`, `idempotencyKey` and an optional `maxSeconds`. The request key is 8–100 letters, digits, underscores or hyphens. Identical settings return the same durable ID; conflicting reuse returns 409. IDs must belong to the project. Unknown fields, executable paths and adapter uploads are rejected.
 
-Job state and verdict are separate. `COMPLETED` can carry `PASS`, `FAIL`, `INCONCLUSIVE`, `UNSUPPORTED` or `RUNNER_ERROR`; a cancelled job carries `CANCELLED`. The selected sample's baseline and faulted results remain separate. Permanent omission stays inconclusive. Coverage, explicit exclusions, capture ID/hash, source interval and integer units remain attached. A saved mainnet recording is labelled replay, and intentional sample defects are not attributed to the external indexer.
+| `kind` | Other settings | Meaning |
+| --- | --- | --- |
+| `campaign` (default) | `caseId`, `variant: faulty \| fixed`; 10–360 seconds | Clean baseline, then the case's faulted assertion; confirmed faulty failures create a sealed case |
+| `capture` | `durationSeconds: 1–30`, `maxTransactions: 1–100`, `maxBytes: 1024–4194304`, `commitment` | Bounded live mainnet recording |
+| `reference` | `captureId` | Finalized membership, and full-filter reconstruction when bounded enough |
+| `normalize` | `captureId`, **required** `allowV1Exclusions`, `seed`, `preset` | Verified decoder, supporting reference files and initial scenario case |
+| `scenario` | `caseId`, `seed`, `preset` | New immutable scenario over the same inputs |
+| `reduce` | Confirmed `caseId`, `maxAttempts: 2–20` | Preserve fingerprint, dependencies and fault anchors; save reduced case on verified success |
+| `compare` | Confirmed `caseId`, `repeats: 1–5` | Finite fresh-state pairs of pinned faulty/fixed variants |
+| `export` | Confirmed `caseId` | Locked portable offline archive and instructions |
 
-SSE connections last at most 30 seconds and reconnect from the last event ID. Up to 16 progress streams are allowed. Clients may use the cursor-based JSON endpoint instead; job identity and history do not depend on an open connection. Every evidence download rechecks its checksum. Ownership config, tokens, executable files and arbitrary paths are excluded from the evidence API. Full raw chunks remain local; the input/manifest records expose exact references for the future source viewer.
+Presets are `crash`, `duplicate`, `disconnect`, `temporary-omission` and `permanent-omission`. Only the supported anchored configurations are executable. Arbitrary mid-statement crashes are unsupported. Permanent omission remains inconclusive.
 
-## Ownership and limits
+`COMPLETED` is a job state, not a correctness verdict. Results distinguish `PASS`, `FAIL`, `INCONCLUSIVE`, `UNSUPPORTED`, `RUNNER_ERROR` and `CANCELLED`. A failed application assertion is an incident; a process/setup error is not evidence of a consumer defect. Coverage and finite reproduction confidence remain separate. Exact amounts use decimal integer strings; unrelated mints remain separate.
 
-At most 20 queued/running jobs and two unexpired worker leases are admitted globally. Claims use a transaction with row locking and `SKIP LOCKED`, a 15-second lease and a new generation. Workers renew every two seconds. A lost lease stops work; every progress/publication mutation verifies worker ID, generation and lease under a row lock. Three expired attempts end as a runner error, with local evidence retained. Each generation has its own exclusively written case/evidence directory and every execution creates a new owned PostgreSQL container. No recovery reuses interrupted mutable consumer state.
+## Ownership and bounds
 
-Execution has a 360-second job budget plus up to 90 seconds of cleanup grace. The existing scenario/runtime enforce their own shorter limits and network isolation. Each consumer database retains its existing 256-MiB memory, one-CPU, PID and temporary-storage limits. The worker and API themselves run on the trusted local host; this is not a hostile-code sandbox.
+Global limits: 20 queued/running jobs, two unexpired worker leases, 100 projects, 100 registered recordings, 200 cases and 2,000 saved jobs. Queue admission, claims and registrations use transaction locks. Claims use `SKIP LOCKED`, a 15-second lease renewed every two seconds, and fenced generations. Progress, derived-case/reference registration and final results require current ownership under a row lock. Lost ownership aborts active work. Recovery always gets a new directory and fresh owned consumer databases; two workers never attach to the same mutable consumer state.
 
-Cases are capped at 32 MiB. Storage admission is capped at 1 GiB with a 128-MiB per-attempt scheduling reserve. This reserve is not an operating-system filesystem quota; retained evidence can consume the reserve, and complete retention/backup/quota supervision remains open. Projects/cases are capped at 100/200, request bodies at 8 KiB, and job event histories at 128 entries. No automatic deletion of captures or prior attempts occurs.
+Saved-input jobs allow at most three attempts. An expired live recording becomes `INCONCLUSIVE` without automatically subscribing again: new live inputs would be a different recording. Cancelled work cannot publish a new derived case. Prior attempt evidence remains local. No automatic deletion occurs.
 
-The local defaults need no additional environment values. For a dedicated remote control database, server-side `AFTERSHOCK_CONTROL_URL` must identify database `aftershock_control`; `AFTERSHOCK_WORKBENCH_STORAGE` can point to a private durable volume. Those settings do not turn the localhost services into a hosted deployment. Never point control storage at disposable consumer state. Keep all private storage and credential files outside versioned artifacts.
+Operation budgets are 10–1,200 seconds (campaigns at most 360), with existing engine limits and up to 90 seconds of cleanup grace. Live setup has a separate 50-second deadline. Each sample container retains the engine's network, CPU, memory, PID and temporary-storage limits. Cases/archives are capped at 32 MiB; public JSON artifacts at 16 MiB. Reference reads retain their existing 16/64-MiB response budgets. Reduction is capped at 256 MiB and 20 attempts. Requests are 8 KiB; histories 128 events; SSE streams 16 connections, each at most 30 seconds with resumable event IDs. The browser uses SSE plus cursor polling to restore final state after reconnect.
 
-Run `pnpm test:control` after `pnpm db:up`. It builds the bundled engine, uses freshly named control test databases, runs real isolated samples, and drops only its own test state. CI also runs it. PostgreSQL queue locking follows [the PostgreSQL 15 locking documentation](https://www.postgresql.org/docs/15/sql-select.html); the API uses [Fastify 5](https://fastify.dev/docs/latest/Guides/Migration-Guide-V5/).
+Storage admission uses a 1-GiB cap and 128-MiB reserve; active workers monitor storage every two seconds and abort near the cap. This is bounded application supervision, **not a hard filesystem quota**. Use a dedicated bounded durable volume for hosted operation. Retention/backup operations and sustained service reliability remain later operational work. The trusted Docker host is an explicit dependency, not a hostile-code sandbox.
+
+## Hosted samples and connected local execution
+
+`AFTERSHOCK_WORKBENCH_MODE=hosted-samples` requires an exact HTTPS `AFTERSHOCK_WORKBENCH_ORIGIN`, enables binding on `0.0.0.0:8787`, and requires the operator-issued token for pairing. Sessions use Secure cookies. An HTTPS reverse proxy and private durable storage/control database are operator prerequisites. This mode serves the same maintained sample engine; no remote consumer code upload exists. The access token, origin checks and global job/resource caps protect job creation. The browser offers the synthetic sample or operator-registered recordings according to the server's library.
+
+The Runner screen opens the workbench at `http://127.0.0.1:8787` for connected local execution. The local UI, recordings and runner stay on that machine; no private code is uploaded to the hosted service. The maintained adapter works here today; arbitrary private external adapters remain Phase 5. These paths are implemented and tested without claiming an actual public deployment. Deployment is Phase 6.
+
+`AFTERSHOCK_CONTROL_URL` must identify the dedicated database `aftershock_control`; `AFTERSHOCK_WORKBENCH_STORAGE` may identify a private durable volume. Keep both settings and provider credentials server-side.
+
+Run `pnpm check`, `pnpm build:workbench`, `pnpm test:regression` and `pnpm test:control`. The integrations use fresh control test databases and disposable sample containers. CI runs all four checks. See the [Phase 4 report](phase-4-report.md) for measured browser acceptance and limitations.

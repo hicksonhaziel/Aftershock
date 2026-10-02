@@ -8,7 +8,7 @@
     "node": ">=22.22.0 <23"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p apps/workbench/tsconfig.json",
     "test": "tsx --test packages/*/test/*.test.ts apps/cli/test/*.test.ts",
     "check": "pnpm format:check && pnpm typecheck && pnpm test",
     "doctor": "tsx apps/cli/src/index.ts doctor",
@@ -38,7 +38,8 @@
     "control": "tsx apps/cli/src/control.ts",
     "api": "tsx apps/api/src/index.ts",
     "worker": "tsx apps/worker/src/index.ts",
-    "test:control": "pnpm build:regression && tsx --test packages/control/integration/*.test.ts"
+    "test:control": "pnpm build:regression && tsx --test packages/control/integration/*.test.ts",
+    "build:workbench": "pnpm --filter @aftershock/workbench build"
   },
   "devDependencies": {
     "@types/node": "22.18.6",

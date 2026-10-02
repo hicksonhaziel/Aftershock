@@ -105,5 +105,5 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
     if (!process.argv[2] || !process.argv[3] || (process.argv[4] && process.argv[4] !== "--legacy-v0-only") || process.argv[5]) throw new Error("Invalid arguments.");
     const result = normalizeCapture(resolve(process.argv[2]), resolve(process.argv[3]), process.argv[4] === "--legacy-v0-only");
     console.log(`Normalized trades: ${result.directory}\n${result.events} events from ${result.transactions} transactions; ${result.exclusions} explicit v1 exclusions. Coverage remains unassessed.`);
-  } catch { console.error("Trade normalization failed: check capture integrity, decoder build, supported inputs and Linux namespace support. No consumer campaign was run."); process.exitCode = 2; }
+  } catch (error) { console.error("Trade normalization failed: check capture integrity, decoder build, supported inputs and Linux namespace support. No consumer campaign was run."); process.exitCode = error instanceof Error && error.message.startsWith("Pinned decoder does not support v1;") ? 3 : 2; }
 }

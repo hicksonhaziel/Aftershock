@@ -6,7 +6,7 @@ Aftershock is being built to capture mainnet data through Solami, test isolated 
 
 ## Current status
 
-**Phases 0–3 complete for the declared CLI scope; Phase 4 started.** Aftershock captures and normalizes supported Solana trades, runs isolated PostgreSQL samples, kills and restarts a consumer, reduces the same failure to a smaller case, and exports an offline regression. The flagship was reduced from 19 transactions to one; both cases reproduced the intentional defect five times and passed with the correction five times. See the [Phase 3 report](docs/phase-3-report.md), [reduction workflow](docs/phase-3-workflow.md) and [scope review](docs/scope-review.md). The initial [local API and durable worker](docs/workbench-api.md) now save campaigns, progress and incident evidence. The [Phase 4 progress report](docs/phase-4-progress.md) distinguishes this backend milestone from the pending browser workbench and full external adapter.
+**Phases 0–4 complete for the declared maintained-sample scope.** The browser now drives fresh capture → finalized reference → isolated campaign → incident → reduction → repeated fix comparison → offline export. Fresh browser acceptance reduced 16 transaction inputs to one; the faulty sample reproduced the same intentional defect 5/5 times and the fixed sample passed 5/5 with real process crashes and fresh state. See the [Phase 4 acceptance report](docs/phase-4-report.md), [workbench setup](docs/workbench-api.md) and [scope review](docs/scope-review.md). Private external consumer execution, the second sample and sustained reliability remain Phase 5; public deployment remains Phase 6.
 
 ## Local setup
 
@@ -25,6 +25,21 @@ Set `SOLAMI_RPC_URL` in the ignored `.env` file to the endpoint issued by your S
 
 `doctor` checks local configuration without making network requests or printing credential values. It exits with `3` when the RPC configuration is missing, `2` for a setup error, and `0` when the current local checks pass. A successful diagnostic validates URL syntax, not endpoint access. `pnpm rpc:check` makes two read-only requests to verify the mainnet genesis hash and retrieve a finalized slot; it never prints endpoint credentials.
 
+## Open the workbench
+
+Follow the [workbench setup guide](docs/workbench-api.md) to initialize the dedicated control database and register a synthetic sample or a saved mainnet case. Build the runtime/interface, then run the API and worker in separate terminals:
+
+```sh
+pnpm build:regression
+pnpm build:workbench
+pnpm control init
+pnpm api
+# In another terminal:
+pnpm worker
+```
+
+Open `http://127.0.0.1:8787` and select **Connect runner**. Recordings, provider credentials and execution stay on that runner. Hosted sample mode is implemented and authentication-tested, but has not been publicly deployed.
+
 ## Workspace
 
 - `packages/contracts`: versioned capture, execution, protocol and regression-artifact contracts.
@@ -34,13 +49,14 @@ Set `SOLAMI_RPC_URL` in the ignored `.env` file to the endpoint issued by your S
 - `packages/projection`: expected trade state and concrete event/aggregate discrepancies.
 - `packages/reference`: finalized captured-signature membership and coverage reporting.
 - `packages/control`: persistent jobs, fenced worker ownership and private evidence storage.
-- `apps/api`, `apps/worker`: authenticated local campaign API and durable engine worker.
+- `apps/api`, `apps/worker`: authenticated operation API and durable engine worker.
+- `apps/workbench`: React/Vite evidence interface served by the API.
 - `apps/cli`: diagnostics, bounded live capture, and reference commands.
 - `docs/architecture.md`: implementation boundaries and unresolved decisions.
 
 ## Development checks
 
-`pnpm check` runs strict TypeScript checking and tests covering integer precision, schema compatibility, explicit adapter acknowledgements, and separate coverage/verdict reporting. With the local database running, `pnpm test:regression` checks the offline engine and `pnpm test:control` checks PostgreSQL job ownership and actual API/worker execution. CI runs all three.
+`pnpm check` runs strict TypeScript checking and tests covering integer precision, schema compatibility, explicit adapter acknowledgements, and separate coverage/verdict reporting. With the local database running, `pnpm test:regression` checks the offline engine and `pnpm test:control` checks PostgreSQL job ownership and actual API/worker execution. `pnpm build:workbench` verifies the production interface. CI runs all four.
 
 Aftershock uses MIT; external source attribution is retained separately. See [local setup and licensing](docs/local-setup.md) and the [adapter protocol](docs/adapter-protocol.md).
 

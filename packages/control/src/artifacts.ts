@@ -25,6 +25,7 @@ export function caseProvenance(directory: string) {
     consumer: "Maintained trade sample with an intentional faulty variant",
     capture: loaded.input.parent, coverage: loaded.input.coverage,
     inputSha256: loaded.spec.input.sha256, caseId: loaded.spec.caseId,
+    reference: loaded.files.has("finalized-reference/reference.json") ? (() => { const value = JSON.parse(readArtifact(directory, loaded.files.get("finalized-reference/reference.json")!, 1024 * 1024).toString()); return { referenceId: value.referenceId, result: value.result, reconstruction: value.reconstruction }; })() : null,
     assertion: loaded.spec.assertion, scenario: loaded.spec.scenario,
     inputs: loaded.input.deliveries.length, events: loaded.input.deliveries.reduce((sum, d) => sum + d.events.length, 0),
     sourceRevision: loaded.lock.sourceRevision, implementationDigest: loaded.lock.implementationDigest };

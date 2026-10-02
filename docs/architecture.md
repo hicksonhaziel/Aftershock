@@ -1,6 +1,6 @@
 # Initial architecture decisions
 
-Status: Phases 0–3 accepted for the declared CLI scope. Version 1 interfaces are implemented by the isolated runner and maintained PostgreSQL samples, with failure-preserving reduction and pinned repeated comparisons. See [Phase 3 acceptance](phase-3-report.md), [reduction workflow](phase-3-workflow.md) and [scope review](scope-review.md).
+Status: Phases 0–4 accepted for the declared maintained-sample CLI/workbench scope. Version 1 interfaces are implemented by the isolated runner and maintained PostgreSQL samples, with failure-preserving reduction and pinned repeated comparisons. See [Phase 3 acceptance](phase-3-report.md), [reduction workflow](phase-3-workflow.md) and [scope review](scope-review.md).
 
 ## Established boundaries
 
@@ -15,13 +15,14 @@ Status: Phases 0–3 accepted for the declared CLI scope. Version 1 interfaces a
 
 ## Next implementation gates
 
-1. Complete the browser workbench and remaining API operations in Phase 4. The first [durable campaign API/worker slice](workbench-api.md) is implemented; [progress and acceptance gaps](phase-4-progress.md) remain explicit.
-2. Complete the external persistence adapter, second maintained sample and broader reliability checks in Phase 5; preserve explicit v1 exclusions until supported.
-3. Verify deployment and submission in Phase 6.
+1. Complete the external persistence adapter, second maintained sample and broader reliability checks in Phase 5; preserve explicit v1 exclusions until supported.
+2. Verify deployment and submission in Phase 6.
+
+The [Phase 4 acceptance](phase-4-report.md) records the completed durable browser workflow and its limits.
 
 The implemented CLI path uses immutable captured frames, pinned decoder observation, declared expected state, separate clean/duplicate runs in owned network-disabled PostgreSQL containers, concrete discrepancies and bundled offline regression commands. The maintained fixed sample only adds newly inserted event effects to totals and commits its checkpoint atomically. The supervisor observes real post-commit process kills and restarts against retained state; explicit overlap tests both builds. Reference, clean/faulted and application result lanes remain distinct. See the workflow guide for runtime/dependency limits.
 
-The web layer uses Fastify and a persistent PostgreSQL worker for its initial campaign API; React/Vite is next. Control jobs live separately from disposable sample state. Expired jobs restart into a new attempt directory and fresh databases, and ownership fences reject stale progress/publication. Immutable saved inputs and actual engine traces remain the source of verdicts. Public hosted execution will run maintained examples; private consumer execution belongs on the developer's local runner. The current services are local, authenticated and limited to operator-imported maintained sample code.
+The web layer uses Fastify, a persistent PostgreSQL worker and a React/Vite evidence workbench for capture, scenarios, incidents, reduction, comparison and exports. Control jobs live separately from disposable sample state. Expired saved-input jobs restart into a new attempt directory and fresh databases; expired live captures remain inconclusive without resubscription. Ownership fences reject stale progress and publication. Immutable saved inputs and actual engine traces remain the source of verdicts. Public hosted execution will run maintained examples; private consumer execution belongs on the developer's local runner. Local pairing requires same-origin loopback intent; hosted-sample pairing requires an operator token and HTTPS origin. Both paths execute only the trusted maintained sample. Cases pin runtime/source hashes, supporting finalized references and explicit exclusions. Storage admission and monitoring are application limits, not a hard disk quota. See the [API and setup guide](workbench-api.md) for authentication, recovery and operation budgets.
 
 ## Provider documentation discrepancy
 

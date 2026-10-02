@@ -20,7 +20,7 @@ export async function testControl() {
   const storage = mkdtempSync(join(tmpdir(), "aftershock-control-test-"));
   await store.migrate();
   return { store, storage, reconnect: () => new ControlStore(new pg.Pool({ ...base, database: name })),
-    cleanup: async () => { await store.pool.end(); await admin.query(`DROP DATABASE ${name} WITH (FORCE)`); await admin.end(); rmSync(storage, { recursive: true, force: true }); } };
+    cleanup: async () => { await store.pool.end(); await admin.query(`DROP DATABASE ${name}`); await admin.end(); rmSync(storage, { recursive: true, force: true }); } };
 }
 export async function syntheticCase(store: ControlStore, storage: string) {
   const project = await store.createProject({ name: "Synthetic control acceptance", adapter: "maintained-trade-ledger-v1" });

@@ -16,7 +16,7 @@ The schema defines ownership, immutable business event identities, per-program/m
 
 The implemented supervisor allocates a new owned container/database per run, restricts consumer state to that database, and verifies ownership before reset/removal. The bootstrap user is a local development owner, not a public-service security boundary. Remote arbitrary-code execution is outside this setup. Existing containers/databases for other projects are not managed by these commands.
 
-`pnpm control init` applies the separate persistent job migration to `aftershock_control` and creates a private local API token. `pnpm api` and `pnpm worker` reuse that control database while campaigns continue using disposable state. See [local campaign API setup](workbench-api.md) for importing saved cases, protected routes, recovery behavior and current limits. `pnpm test:control` creates and removes only fresh `aftershock_control_test_<uuid>` databases; it never clears normal project/job tables.
+`pnpm control init` applies the separate persistent job and capture-registry migrations to `aftershock_control` and creates a private local API token. `pnpm api` and `pnpm worker` reuse that control database while campaigns continue using disposable state. Build the production interface with `pnpm build:workbench`, then open `http://127.0.0.1:8787` and connect to the runner. See [workbench setup](workbench-api.md) for creating projects, registering the labelled synthetic sample or saved recordings, protected routes, recovery and current limits. `pnpm test:control` creates and removes only fresh `aftershock_control_test_<uuid>` databases; it never clears normal project/job tables.
 
 ## License and attribution
 

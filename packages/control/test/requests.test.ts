@@ -13,3 +13,15 @@ test("browser job requests reject code paths, arbitrary adapters, excessive budg
   assert.equal(progressCursorSchema.safeParse("-1").success, false);
   assert.equal(progressCursorSchema.parse("4"), 4);
 });
+
+test("operation requests require typed IDs, bounded capture and reduction settings, and explicit decoder exclusions", async () => {
+  const { operationRequestSchema } = await import("@aftershock/contracts");
+  const base = { projectId: randomUUID(), idempotencyKey: "operation-key" };
+  const capture = operationRequestSchema.parse({ ...base, kind: "capture" });
+  assert.ok(capture.kind === "capture"); assert.equal(capture.maxTransactions, 25);
+  for (const invalid of [{ ...base, kind: "capture", maxBytes: 4194305 }, { ...base, kind: "capture", durationSeconds: 31 },
+    { ...base, kind: "capture", accountInclude: ["arbitrary"] }, { ...base, kind: "normalize", captureId: randomUUID() },
+    { ...base, kind: "normalize", captureId: randomUUID(), allowV1Exclusions: true, binary: "/private/code" },
+    { ...base, kind: "reduce", caseId: randomUUID(), maxAttempts: 21 }, { ...base, kind: "compare", caseId: randomUUID(), repeats: 6 }])
+    assert.equal(operationRequestSchema.safeParse(invalid).success, false);
+});

@@ -26,6 +26,7 @@ jobs:
           fi
           /usr/bin/unshare --user --map-root-user --net true
       - run: pnpm check
+      - run: pnpm build:workbench
       - run: pnpm db:up
       - run: pnpm db:check
       - run: pnpm test:regression

@@ -1,6 +1,6 @@
-# Phase 4 started: persistent campaigns and evidence API
+# Initial Phase 4 backend milestone
 
-Updated 2 October 2026. Phase 4 is **in progress**, with its first backend slice implemented. Browser acceptance and the rest of the workbench are still open.
+Historical record of the first backend milestone on 2 October 2026. The subsequent full workbench acceptance is in the [Phase 4 report](phase-4-report.md); use that report and the [current setup/API guide](workbench-api.md) for present capabilities. The sections below describe what was implemented and still pending at this earlier milestone.
 
 The API can save projects, list locally imported cases, queue a maintained sample campaign, retain progress, cancel work, and return an incident with exact discrepancies and checksummed evidence. Each job first runs its selected sample variant without injected faults. A failed baseline stops that job before fault injection. A passing baseline unlocks the configured faulted run. `FAIL` means an application assertion failed; it does not mean the worker failed. Faulty and fixed variants are separate jobs over the same immutable case.
 
