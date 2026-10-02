@@ -1,13 +1,11 @@
+import { createApiClient } from "./client";
 export type Project = { id: string; name: string; adapter: string };
 export type Provenance = { sourceMode: string; capture: { captureId: string; manifest: { sha256: string } } | null; coverage: { status: string; scope: string; startSlot: string; endSlot: string; exclusions: string[] }; inputs: number; events: number; scenario: any; assertion: any };
 export type Case = { id: string; lockSha256: string; provenance: Provenance };
 export type Capture = { id: string; manifestSha256: string; summary: any; reference: any };
 export type Run = { id: string; projectId: string; caseId: string | null; kind: string; variant: string | null; state: string; verdict: string | null; attempt: number; cancelRequested: boolean; createdAtUtc: string; result: any; maxSeconds: number };
 export const base = import.meta.env.DEV ? "/api" : "";
-export async function api<T = any>(path: string, body?: unknown, signal?: AbortSignal): Promise<T> {
-  const response = await fetch(base + path, { credentials: "same-origin", ...(body !== undefined ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {}), ...(signal ? { signal } : {}) });
-  const value = await response.json(); if (!response.ok) throw new Error(value.error ?? "The runner could not complete this request."); return value;
-}
+export const api = createApiClient(base, () => window.dispatchEvent(new Event("aftershock-session-ended")));
 export const short = (id: string | null | undefined) => id ? id.slice(0, 8) : "—";
 export const stamp = (value: string) => new Date(value).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 export const bytes = (value: number) => value < 1024 ? `${value} B` : value < 1048576 ? `${(value / 1024).toFixed(1)} KB` : `${(value / 1048576).toFixed(1)} MB`;

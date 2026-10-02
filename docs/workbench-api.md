@@ -36,6 +36,10 @@ Open `http://127.0.0.1:8787` and select **Connect runner**. Same-origin loopback
 
 For interface development, `pnpm --filter @aftershock/workbench dev` proxies `/api` to the local server. Set the API's `AFTERSHOCK_WORKBENCH_ORIGIN` to the exact development origin, such as `http://127.0.0.1:5173`. The default production build uses the same origin for UI and API.
 
+## Interface controls
+
+Use **Dark / White** in the top bar to change appearance, or **Ctrl K / ⌘ K** to search pages and saved evidence. Run details separate the result summary, source files and durable log. See [workbench interface](workbench-design.md) for navigation, accessibility and verification notes.
+
 ## Live inputs and references
 
 Live recording uses the runner's local `.env` provider configuration, never browser credentials. Configure Solami according to the [capture workflow](phase-1-workflow.md). Normalization also requires the verified Rust decoder from the [integration setup](../integrations/solana-realtime-indexer/README.md); `AFTERSHOCK_DECODER_BINARY` can identify that local binary. Its hash must match the committed decoder lock. Missing decoder/setup is a runner error. Unsupported v1 input without explicit exclusion is `UNSUPPORTED`.

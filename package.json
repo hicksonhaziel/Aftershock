@@ -9,7 +9,7 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit && tsc --noEmit -p apps/workbench/tsconfig.json",
-    "test": "tsx --test packages/*/test/*.test.ts apps/cli/test/*.test.ts",
+    "test": "tsx --test packages/*/test/*.test.ts apps/cli/test/*.test.ts apps/workbench/test/*.test.ts",
     "check": "pnpm format:check && pnpm typecheck && pnpm test",
     "doctor": "tsx apps/cli/src/index.ts doctor",
     "rpc:check": "tsx apps/cli/src/index.ts rpc-check",
